@@ -18,6 +18,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { registerUser, loginUser, refreshAccessToken, logout } from './auth.service';
 import { authLimiter } from '../common/rate-limiter';
+import { requireAuth } from './auth.middleware';
+import { prisma } from '../common/prisma';
 
 const router = Router();
 
@@ -138,6 +140,41 @@ router.post('/logout', async (req: Request, res: Response, next: NextFunction) =
 
     await logout(refreshToken);
     res.status(200).json({ success: true, message: 'Logged out successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/auth/me
+ *
+ * Retrieve the current user's profile information.
+ * Requires authentication.
+ */
+router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user!.userId },
+      select: {
+        id: true,
+        email: true,
+        mobile: true,
+        displayName: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      res.status(404).json({
+        status: 404,
+        code: 'NOT_FOUND',
+        message: 'User not found',
+        retryable: false,
+      });
+      return;
+    }
+
+    res.status(200).json({ success: true, data: user });
   } catch (error) {
     next(error);
   }

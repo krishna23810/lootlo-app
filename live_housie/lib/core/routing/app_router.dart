@@ -9,8 +9,10 @@ import '../../features/game/views/game_list_screen.dart';
 import '../../features/game/views/game_detail_screen.dart';
 import '../../features/ticket/views/ticket_list_screen.dart';
 import '../../features/ticket/views/ticket_view_screen.dart';
+import '../../features/ticket/views/game_tickets_screen.dart';
 import '../../features/wallet/views/wallet_screen.dart';
 import '../../features/live_session/views/live_session_screen.dart';
+import '../../features/profile/views/profile_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -25,8 +27,10 @@ class AppRoutes {
   static const String gameDetail = '/games/:gameId';
   static const String tickets = '/tickets';
   static const String ticket = '/tickets/:ticketId';
+  static const String ticketGroup = '/tickets/game/:gameId';
   static const String wallet = '/wallet';
   static const String liveSession = '/games/:gameId/live';
+  static const String profile = '/profile';
 }
 
 @riverpod
@@ -75,7 +79,19 @@ GoRouter appRouter(Ref ref) {
         name: 'ticket',
         builder: (context, state) {
           final ticketId = state.pathParameters['ticketId']!;
-          return TicketViewScreen(ticketId: ticketId);
+          final extra = state.extra as Map<String, dynamic>?;
+          final ticketIndex = extra?['ticketIndex'] as int?;
+          return TicketViewScreen(ticketId: ticketId, ticketIndex: ticketIndex);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.ticketGroup,
+        name: 'ticketGroup',
+        builder: (context, state) {
+          final gameId = state.pathParameters['gameId']!;
+          final extra = state.extra as Map<String, dynamic>?;
+          final gameName = extra?['gameName'] as String? ?? 'Game Tickets';
+          return GameTicketsScreen(gameId: gameId, gameName: gameName);
         },
       ),
       GoRoute(
@@ -90,6 +106,11 @@ GoRouter appRouter(Ref ref) {
           final gameId = state.pathParameters['gameId']!;
           return LiveSessionScreen(gameId: gameId);
         },
+      ),
+      GoRoute(
+        path: AppRoutes.profile,
+        name: 'profile',
+        builder: (context, state) => const ProfileScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

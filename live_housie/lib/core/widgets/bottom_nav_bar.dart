@@ -85,7 +85,7 @@ class LootloBottomNav extends StatelessWidget {
         context.go(AppRoutes.tickets);
         break;
       case NavTab.profile:
-        // TODO: Add profile route
+        context.go(AppRoutes.profile);
         break;
     }
   }

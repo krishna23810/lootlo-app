@@ -61,4 +61,10 @@ class AuthRepository extends BaseRepository {
       'refreshToken': refreshToken,
     });
   }
+
+  /// Get current user profile details.
+  Future<UserData> getMe() async {
+    final response = await dio.get('/auth/me');
+    return UserData.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
 }
