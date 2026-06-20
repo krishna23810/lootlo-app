@@ -25,6 +25,7 @@ import { validationError, notFoundError } from '../common/errors';
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface CreateGameInput {
+  gameName: string;           // Required friendly display name for the game
   scheduledStartTime: string; // ISO date string from client
   ticketPriceCents: number;
   maxTicketCount: number;
@@ -57,6 +58,13 @@ export interface CreateGameInput {
  */
 export async function createGame(input: CreateGameInput) {
   const errors: Record<string, string> = {};
+
+  // ── Validate game name ───────────────────────────────────────────────────
+  if (!input.gameName || input.gameName.trim().length === 0) {
+    errors.gameName = 'Game name is required';
+  } else if (input.gameName.trim().length > 100) {
+    errors.gameName = 'Game name must be 100 characters or less';
+  }
 
   // ── Validate start time ─────────────────────────────────────────────────
   const startTime = new Date(input.scheduledStartTime);
@@ -107,6 +115,7 @@ export async function createGame(input: CreateGameInput) {
   // ── Create the game in database ─────────────────────────────────────────
   const game = await prisma.game.create({
     data: {
+      gameName: input.gameName.trim(),
       scheduledStartTime: startTime,
       ticketPriceCents: input.ticketPriceCents,
       maxTicketCount: input.maxTicketCount,
@@ -169,6 +178,7 @@ export async function getGame(gameId: string) {
  */
 function formatGameResponse(game: {
   id: string;
+  gameName: string;
   scheduledStartTime: Date;
   ticketPriceCents: number;
   maxTicketCount: number;
@@ -181,6 +191,7 @@ function formatGameResponse(game: {
 }) {
   return {
     id: game.id,
+    gameName: game.gameName,
     scheduledStartTime: game.scheduledStartTime.toISOString(),
     ticketPriceCents: game.ticketPriceCents,
     maxTicketCount: game.maxTicketCount,

@@ -4,6 +4,7 @@ import api from '../api';
 
 interface Game {
   id: string;
+  gameName: string;
   scheduledStartTime: string;
   ticketPriceCents: number;
   maxTicketCount: number;
@@ -19,7 +20,7 @@ export default function GamesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingGame, setEditingGame] = useState<Game | null>(null);
-  const [editForm, setEditForm] = useState({ scheduledStartTime: '', ticketPriceCents: 0, maxTicketCount: 0, commissionPercentage: 0 });
+  const [editForm, setEditForm] = useState({ gameName: '', scheduledStartTime: '', ticketPriceCents: 0, maxTicketCount: 0, commissionPercentage: 0 });
 
   useEffect(() => {
     fetchGames();
@@ -49,6 +50,7 @@ export default function GamesPage() {
   const handleEdit = (game: Game) => {
     setEditingGame(game);
     setEditForm({
+      gameName: game.gameName ?? '',
       scheduledStartTime: new Date(game.scheduledStartTime).toISOString().slice(0, 16),
       ticketPriceCents: game.ticketPriceCents,
       maxTicketCount: game.maxTicketCount,
@@ -60,6 +62,7 @@ export default function GamesPage() {
     if (!editingGame) return;
     try {
       await api.patch(`/admin/games/${editingGame.id}`, {
+        gameName: editForm.gameName,
         scheduledStartTime: new Date(editForm.scheduledStartTime).toISOString(),
         ticketPriceCents: editForm.ticketPriceCents,
         maxTicketCount: editForm.maxTicketCount,
@@ -110,7 +113,9 @@ export default function GamesPage() {
             <tbody className="divide-y divide-gray-50">
               {games.map((game) => (
                 <tr key={game.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-800">{game.id.slice(0, 8)}...</td>
+                  <td className="px-6 py-4 font-medium text-gray-800">
+                    <span title={game.id}>{game.gameName}</span>
+                  </td>
                   <td className="px-6 py-4 text-gray-600">{new Date(game.scheduledStartTime).toLocaleString()}</td>
                   <td className="px-6 py-4 text-gray-600">₹{(game.ticketPriceCents / 100).toFixed(0)}</td>
                   <td className="px-6 py-4 text-gray-600">{game.soldTicketCount}/{game.maxTicketCount}</td>
@@ -157,6 +162,17 @@ export default function GamesPage() {
           <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
             <h3 className="text-lg font-bold mb-4">Edit Game</h3>
             <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Game Name</label>
+                <input
+                  type="text"
+                  value={editForm.gameName}
+                  onChange={(e) => setEditForm({ ...editForm, gameName: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  placeholder="e.g. Sunday Mega Housie"
+                  maxLength={100}
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
                 <input

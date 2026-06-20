@@ -263,7 +263,7 @@ class GameListScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Game ${game.formattedPrice}',
+                    game.gameName,
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF191C1E)),
                   ),
                   const SizedBox(height: 4),
@@ -334,7 +334,7 @@ class GameListScreen extends ConsumerWidget {
               ElevatedButton(
                 onPressed: game.isSoldOut ? null : () {
                   Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => GameDetailScreen(gameId: game.id),
+                    builder: (_) => GameDetailScreen(gameId: game.id, gameName: game.gameName),
                   ));
                 },
                 style: ElevatedButton.styleFrom(

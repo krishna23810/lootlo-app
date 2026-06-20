@@ -2,6 +2,7 @@
 
 class GameModel {
   final String id;
+  final String gameName;
   final DateTime scheduledStartTime;
   final int ticketPriceCents;
   final int maxTicketCount;
@@ -13,6 +14,7 @@ class GameModel {
 
   GameModel({
     required this.id,
+    required this.gameName,
     required this.scheduledStartTime,
     required this.ticketPriceCents,
     required this.maxTicketCount,
@@ -26,6 +28,7 @@ class GameModel {
   factory GameModel.fromJson(Map<String, dynamic> json) {
     return GameModel(
       id: json['id'] as String,
+      gameName: json['gameName'] as String,
       scheduledStartTime: DateTime.parse(json['scheduledStartTime'] as String),
       ticketPriceCents: json['ticketPriceCents'] as int,
       maxTicketCount: json['maxTicketCount'] as int,

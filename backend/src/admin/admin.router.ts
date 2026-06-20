@@ -196,7 +196,7 @@ router.delete('/games/:id', async (req: Request, res: Response, next: NextFuncti
 router.patch('/games/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { scheduledStartTime, ticketPriceCents, maxTicketCount, commissionPercentage } = req.body;
+    const { gameName, scheduledStartTime, ticketPriceCents, maxTicketCount, commissionPercentage } = req.body;
 
     const game = await prisma.game.findUnique({ where: { id } });
     if (!game) {
@@ -211,6 +211,7 @@ router.patch('/games/:id', async (req: Request, res: Response, next: NextFunctio
     const updated = await prisma.game.update({
       where: { id },
       data: {
+        ...(gameName !== undefined && { gameName: gameName || null }),
         ...(scheduledStartTime && { scheduledStartTime: new Date(scheduledStartTime) }),
         ...(ticketPriceCents && { ticketPriceCents }),
         ...(maxTicketCount && { maxTicketCount }),

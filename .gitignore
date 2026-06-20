@@ -15,3 +15,5 @@ web-admin/.env.production
 
 .env
 .env.production
+
+.idea

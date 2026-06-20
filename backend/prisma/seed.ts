@@ -19,7 +19,7 @@ async function main() {
 
   // Create a test user
   const passwordHash = await bcrypt.hash('Test1234', 12);
-  
+
   const user = await prisma.user.upsert({
     where: { email: 'test@lootlo.com' },
     update: {},
@@ -56,6 +56,7 @@ async function main() {
   // Create test games
   await prisma.game.create({
     data: {
+      gameName: 'Sunday Mega Housie',
       scheduledStartTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
       ticketPriceCents: 5000, // ₹50
       maxTicketCount: 100,
@@ -76,6 +77,7 @@ async function main() {
 
   await prisma.game.create({
     data: {
+      gameName: 'Tuesday Premium Housie',
       scheduledStartTime: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 hours from now
       ticketPriceCents: 10000, // ₹100
       maxTicketCount: 50,
@@ -92,8 +94,7 @@ async function main() {
       },
     },
   });
-  console.log(`  ✓ Game 2 created: ₹100 ticket, 50 max (starts in 5h)`);
-
+  console.log(`  ✓ Game 2 created: ₹100 ticket, 50 max (starts in 48h)`);
   console.log('\n✅ Seed complete!');
   console.log('\nTest credentials:');
   console.log('  User:  test@lootlo.com / Test1234');

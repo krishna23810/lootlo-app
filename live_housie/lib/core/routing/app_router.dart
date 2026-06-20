@@ -59,7 +59,10 @@ GoRouter appRouter(Ref ref) {
         name: 'gameDetail',
         builder: (context, state) {
           final gameId = state.pathParameters['gameId']!;
-          return GameDetailScreen(gameId: gameId);
+          // gameName is passed via state.extra when navigating from the list screen
+          final extra = state.extra as Map<String, dynamic>?;
+          final gameName = extra?['gameName'] as String? ?? gameId;
+          return GameDetailScreen(gameId: gameId, gameName: gameName);
         },
       ),
       GoRoute(

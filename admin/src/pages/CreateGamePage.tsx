@@ -9,6 +9,7 @@ export default function CreateGamePage() {
   const [success, setSuccess] = useState('');
 
   const [form, setForm] = useState({
+    gameName: '',
     scheduledStartTime: '',
     ticketPriceCents: 5000,
     maxTicketCount: 100,
@@ -59,6 +60,20 @@ export default function CreateGamePage() {
       {success && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">{success}</div>}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-6">
+        {/* Game Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Game Name</label>
+          <input
+            type="text"
+            value={form.gameName}
+            onChange={(e) => setForm({ ...form, gameName: e.target.value })}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g. Sunday Mega Housie"
+            maxLength={100}
+            required
+          />
+        </div>
+
         {/* Start Time */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Start Time</label>

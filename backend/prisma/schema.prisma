@@ -126,6 +126,7 @@ model Transaction {
 
 model Game {
   id                  String    @id @default(uuid()) @db.Uuid
+  gameName            String    @map("game_name") @db.VarChar(100)
   scheduledStartTime  DateTime  @map("scheduled_start_time") @db.Timestamptz
   ticketPriceCents    Int       @map("ticket_price_cents")
   maxTicketCount      Int       @map("max_ticket_count")

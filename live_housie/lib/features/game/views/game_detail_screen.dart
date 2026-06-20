@@ -8,8 +8,9 @@ import '../../../core/widgets/bottom_nav_bar.dart';
 /// Matches the Lootlo mockup design with hero banner, progress, rules.
 class GameDetailScreen extends ConsumerWidget {
   final String gameId;
+  final String gameName;
 
-  const GameDetailScreen({super.key, required this.gameId});
+  const GameDetailScreen({super.key, required this.gameId, required this.gameName});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,9 +41,9 @@ class GameDetailScreen extends ConsumerWidget {
                     child: const Icon(Icons.arrow_back, color: Color(0xFF4648D4), size: 20),
                   ),
                 ),
-                title: const Text(
-                  'Mega Sunday Bumper',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF4648D4)),
+                title: Text(
+                  gameName,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF4648D4)),
                 ),
                 actions: [
                   Container(
