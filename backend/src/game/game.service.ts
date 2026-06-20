@@ -26,6 +26,8 @@ import { validationError, notFoundError } from '../common/errors';
 
 export interface CreateGameInput {
   gameName: string;           // Required friendly display name for the game
+  isFeatured?: boolean;       // If true, shown in the featured banner at top of app
+  maxTicketsPerUser?: number; // Optional limit of tickets a user can buy
   scheduledStartTime: string; // ISO date string from client
   ticketPriceCents: number;
   maxTicketCount: number;
@@ -97,6 +99,14 @@ export async function createGame(input: CreateGameInput) {
     Object.assign(errors, commResult.errors);
   }
 
+  // ── Validate max tickets per user ─────────────────────────────────────────
+  const maxTicketsPerUser = input.maxTicketsPerUser ?? 6;
+  if (input.maxTicketsPerUser !== undefined) {
+    if (isNaN(maxTicketsPerUser) || maxTicketsPerUser < 1 || maxTicketsPerUser > 10) {
+      errors.maxTicketsPerUser = 'Max tickets per user must be between 1 and 10';
+    }
+  }
+
   // ── Validate prize config sums to 100 ──────────────────────────────────
   if (input.prizeConfig) {
     const totalPercentage = Object.values(input.prizeConfig).reduce((sum, val) => sum + val, 0);
@@ -116,10 +126,12 @@ export async function createGame(input: CreateGameInput) {
   const game = await prisma.game.create({
     data: {
       gameName: input.gameName.trim(),
+      isFeatured: input.isFeatured ?? false,
       scheduledStartTime: startTime,
       ticketPriceCents: input.ticketPriceCents,
       maxTicketCount: input.maxTicketCount,
       commissionPercentage: input.commissionPercentage,
+      maxTicketsPerUser,
       prizePoolCents: BigInt(0),
       state: 'upcoming',
       prizeConfig: input.prizeConfig,
@@ -143,7 +155,8 @@ export async function createGame(input: CreateGameInput) {
 export async function listUpcomingGames() {
   const games = await prisma.game.findMany({
     where: { state: 'upcoming' },
-    orderBy: { scheduledStartTime: 'asc' },
+    // Featured games first, then sorted by earliest start time
+    orderBy: [{ isFeatured: 'desc' }, { scheduledStartTime: 'asc' }],
   });
 
   return games.map(formatGameResponse);
@@ -179,10 +192,12 @@ export async function getGame(gameId: string) {
 function formatGameResponse(game: {
   id: string;
   gameName: string;
+  isFeatured: boolean;
   scheduledStartTime: Date;
   ticketPriceCents: number;
   maxTicketCount: number;
   soldTicketCount: number;
+  maxTicketsPerUser: number;
   commissionPercentage: number;
   prizePoolCents: bigint;
   state: string;
@@ -192,11 +207,13 @@ function formatGameResponse(game: {
   return {
     id: game.id,
     gameName: game.gameName,
+    isFeatured: game.isFeatured,
     scheduledStartTime: game.scheduledStartTime.toISOString(),
     ticketPriceCents: game.ticketPriceCents,
     maxTicketCount: game.maxTicketCount,
     soldTicketCount: game.soldTicketCount,
     availableTickets: game.maxTicketCount - game.soldTicketCount,
+    maxTicketsPerUser: game.maxTicketsPerUser,
     commissionPercentage: game.commissionPercentage,
     prizePoolCents: Number(game.prizePoolCents), // BigInt → Number for JSON
     state: game.state,

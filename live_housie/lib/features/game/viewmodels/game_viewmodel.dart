@@ -31,3 +31,9 @@ Future<List<GameModel>> gameList(Ref ref) async {
   final repository = GameRepository();
   return await repository.getUpcomingGames();
 }
+
+@riverpod
+Future<GameModel> gameDetail(Ref ref, String gameId) async {
+  final repository = GameRepository();
+  return await repository.getGameById(gameId);
+}

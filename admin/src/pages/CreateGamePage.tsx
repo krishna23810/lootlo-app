@@ -10,9 +10,11 @@ export default function CreateGamePage() {
 
   const [form, setForm] = useState({
     gameName: '',
+    isFeatured: false,
     scheduledStartTime: '',
     ticketPriceCents: 5000,
     maxTicketCount: 100,
+    maxTicketsPerUser: 6,
     commissionPercentage: 10,
     prizeConfig: {
       full_house: 40,
@@ -74,6 +76,33 @@ export default function CreateGamePage() {
           />
         </div>
 
+        {/* Featured Toggle */}
+        <div
+          onClick={() => setForm({ ...form, isFeatured: !form.isFeatured })}
+          className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+            form.isFeatured
+              ? 'border-amber-400 bg-amber-50'
+              : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+          }`}
+        >
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${
+            form.isFeatured ? 'bg-amber-400' : 'bg-gray-200'
+          }`}>
+            ⭐
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-gray-800">Featured Game</p>
+            <p className="text-xs text-gray-500">Show this game in the highlighted banner at the top of the app</p>
+          </div>
+          <div className={`w-12 h-6 rounded-full transition-colors relative ${
+            form.isFeatured ? 'bg-amber-400' : 'bg-gray-300'
+          }`}>
+            <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+              form.isFeatured ? 'left-7' : 'left-1'
+            }`} />
+          </div>
+        </div>
+
         {/* Start Time */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Start Time</label>
@@ -110,6 +139,20 @@ export default function CreateGamePage() {
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
             min={10}
             max={1000}
+            required
+          />
+        </div>
+
+        {/* Max Tickets Per User */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Max Tickets Per User (1-10)</label>
+          <input
+            type="number"
+            value={form.maxTicketsPerUser}
+            onChange={(e) => setForm({ ...form, maxTicketsPerUser: Number(e.target.value) })}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            min={1}
+            max={10}
             required
           />
         </div>

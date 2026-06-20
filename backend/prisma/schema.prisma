@@ -127,10 +127,12 @@ model Transaction {
 model Game {
   id                  String    @id @default(uuid()) @db.Uuid
   gameName            String    @map("game_name") @db.VarChar(100)
+  isFeatured          Boolean   @default(false) @map("is_featured")
   scheduledStartTime  DateTime  @map("scheduled_start_time") @db.Timestamptz
   ticketPriceCents    Int       @map("ticket_price_cents")
   maxTicketCount      Int       @map("max_ticket_count")
   soldTicketCount     Int       @default(0) @map("sold_ticket_count")
+  maxTicketsPerUser   Int       @default(6) @map("max_tickets_per_user")
   commissionPercentage Int      @map("commission_percentage")
   prizePoolCents      BigInt    @default(0) @map("prize_pool_cents")
   state               GameState @default(upcoming)

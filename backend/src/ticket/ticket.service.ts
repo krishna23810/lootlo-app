@@ -69,13 +69,13 @@ export async function purchaseTicket(userId: string, gameId: string): Promise<Pu
     throw conflictError('Game is sold out — no tickets available');
   }
 
-  // Check 3: User hasn't exceeded 6 tickets for this game
+  // Check 3: User hasn't exceeded the game's max tickets limit
   const userTicketCount = await prisma.ticket.count({
     where: { userId, gameId },
   });
-  if (userTicketCount >= 6) {
+  if (userTicketCount >= game.maxTicketsPerUser) {
     throw validationError('Ticket limit reached', {
-      tickets: 'Maximum 6 tickets per user per game',
+      tickets: `Maximum ${game.maxTicketsPerUser} tickets per user per game`,
     });
   }
 

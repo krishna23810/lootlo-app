@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../models/game_model.dart';
 import '../viewmodels/game_viewmodel.dart';
+import '../../wallet/viewmodels/wallet_viewmodel.dart';
 import 'game_detail_screen.dart';
 
 /// Games List Screen — redesigned to match the Lootlo mockup.
@@ -15,6 +17,7 @@ class GameListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gamesAsync = ref.watch(gameListProvider);
+    final walletAsync = ref.watch(walletBalanceProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FB),
@@ -48,20 +51,63 @@ class GameListScreen extends ConsumerWidget {
                   ),
                   const Spacer(),
                   // Wallet Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE6E8EA),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.account_balance_wallet, color: Color(0xFF4648D4), size: 18),
-                        SizedBox(width: 6),
-                        Text('₹500', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF4648D4), fontSize: 14)),
-                        SizedBox(width: 4),
-                        Icon(Icons.add_circle_outline, color: Color(0xFF767586), size: 16),
-                      ],
+                  GestureDetector(
+                    onTap: () => context.push('/wallet'),
+                    child: walletAsync.when(
+                      data: (wallet) {
+                        final balanceCents = wallet['balanceCents'] as int? ?? 0;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE6E8EA),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.account_balance_wallet, color: Color(0xFF4648D4), size: 18),
+                              const SizedBox(width: 6),
+                              Text(
+                                '₹${(balanceCents / 100).toStringAsFixed(0)}',
+                                style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF4648D4), fontSize: 14),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.add_circle_outline, color: Color(0xFF767586), size: 16),
+                            ],
+                          ),
+                        );
+                      },
+                      loading: () => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE6E8EA),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.account_balance_wallet, color: Color(0xFF4648D4), size: 18),
+                            SizedBox(width: 6),
+                            SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF4648D4)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      error: (_, __) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE6E8EA),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.account_balance_wallet, color: Colors.red, size: 18),
+                            SizedBox(width: 6),
+                            Text('₹0', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.red, fontSize: 14)),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -99,98 +145,6 @@ class GameListScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 20),
 
-                      // ─── Featured Banner ───────────────────────
-                      Container(
-                        height: 180,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Color(0xFF4648D4), Color(0xFF6063EE), Color(0xFF8B5CF6)],
-                          ),
-                        ),
-                        child: Stack(
-                          children: [
-                            // Content
-                            Positioned(
-                              bottom: 20,
-                              left: 20,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFEA619),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const Text('FEATURED EVENT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  const Text('Mega Sunday Bumper', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Colors.white)),
-                                  const Text('Win up to ₹1,00,000', style: TextStyle(fontSize: 14, color: Colors.white70)),
-                                ],
-                              ),
-                            ),
-                            // Timer badge
-                            Positioned(
-                              top: 16,
-                              right: 16,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-                                ),
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.timer, color: Color(0xFFFEA619), size: 16),
-                                    SizedBox(width: 4),
-                                    Text('02:14:55', style: TextStyle(color: Color(0xFFFEA619), fontWeight: FontWeight.w700, fontSize: 13)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            // Enter button
-                            Positioned(
-                              bottom: 20,
-                              right: 20,
-                              child: ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: const Color(0xFF4648D4),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                ),
-                                child: const Text('Enter Now', style: TextStyle(fontWeight: FontWeight.w600)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // ─── Upcoming Games Header ─────────────────
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Upcoming Games', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Color(0xFF191C1E))),
-                          TextButton(
-                            onPressed: () {},
-                            child: const Row(
-                              children: [
-                                Text('View All', style: TextStyle(color: Color(0xFF4648D4), fontWeight: FontWeight.w600, fontSize: 14)),
-                                Icon(Icons.chevron_right, size: 18, color: Color(0xFF4648D4)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
 
                       // ─── Game Cards ────────────────────────────
                       gamesAsync.when(
@@ -207,14 +161,49 @@ class GameListScreen extends ConsumerWidget {
                           ),
                         ),
                         data: (games) {
-                          if (games.isEmpty) {
-                            return const Padding(
-                              padding: EdgeInsets.all(32),
-                              child: Center(child: Text('No upcoming games. Check back later!', style: TextStyle(color: Color(0xFF464554)))),
-                            );
-                          }
+                          // Find the featured game — safe null check with == true
+                          final featuredGame = games.where((g) => g.isFeatured == true).firstOrNull;
+                          // Non-featured games for the list below
+                          final listedGames = featuredGame != null
+                              ? games.where((g) => g.id != featuredGame.id).toList()
+                              : games;
+
                           return Column(
-                            children: games.map((game) => _buildGameCard(context, game)).toList(),
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // ─── Featured Banner (dynamic) ─────────
+                              if (featuredGame != null) ...[
+                                _buildFeaturedBanner(context, featuredGame),
+                                const SizedBox(height: 24),
+                              ],
+
+                              // ─── Upcoming Games Header ─────────────
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Upcoming Games', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Color(0xFF191C1E))),
+                                  TextButton(
+                                    onPressed: () {},
+                                    child: const Row(
+                                      children: [
+                                        Text('View All', style: TextStyle(color: Color(0xFF4648D4), fontWeight: FontWeight.w600, fontSize: 14)),
+                                        Icon(Icons.chevron_right, size: 18, color: Color(0xFF4648D4)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+
+                              // ─── Game Cards ────────────────────────
+                              if (games.isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.all(32),
+                                  child: Center(child: Text('No upcoming games. Check back later!', style: TextStyle(color: Color(0xFF464554)))),
+                                )
+                              else
+                                ...listedGames.map((game) => _buildGameCard(context, game)),
+                            ],
                           );
                         },
                       ),
@@ -346,6 +335,100 @@ class GameListScreen extends ConsumerWidget {
                 child: Text(game.isSoldOut ? 'Sold Out' : 'Join Now', style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds the dynamic featured banner from a real featured game.
+  Widget _buildFeaturedBanner(BuildContext context, GameModel game) {
+    final timeLeft = game.timeUntilStart;
+    final h = timeLeft.inHours;
+    final m = (timeLeft.inMinutes % 60).toString().padLeft(2, '0');
+    final timeStr = timeLeft.isNegative ? 'Starting soon' : '${h}h ${m}m';
+
+    return Container(
+      height: 180,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF4648D4), Color(0xFF6063EE), Color(0xFF8B5CF6)],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Left content
+          Positioned(
+            bottom: 20,
+            left: 20,
+            right: 120,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEA619),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text('FEATURED EVENT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  game.gameName,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'Ticket: ${game.formattedPrice}',
+                  style: const TextStyle(fontSize: 13, color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
+          // Timer badge top-right
+          Positioned(
+            top: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.timer, color: Color(0xFFFEA619), size: 16),
+                  const SizedBox(width: 4),
+                  Text(timeStr, style: const TextStyle(color: Color(0xFFFEA619), fontWeight: FontWeight.w700, fontSize: 13)),
+                ],
+              ),
+            ),
+          ),
+          // Enter Now button bottom-right
+          Positioned(
+            bottom: 20,
+            right: 20,
+            child: ElevatedButton(
+              onPressed: game.isSoldOut ? null : () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => GameDetailScreen(gameId: game.id, gameName: game.gameName),
+                ));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF4648D4),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              ),
+              child: Text(game.isSoldOut ? 'Sold Out' : 'Enter Now', style: const TextStyle(fontWeight: FontWeight.w600)),
+            ),
           ),
         ],
       ),

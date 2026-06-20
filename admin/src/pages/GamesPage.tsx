@@ -5,11 +5,13 @@ import api from '../api';
 interface Game {
   id: string;
   gameName: string;
+  isFeatured: boolean;
   scheduledStartTime: string;
   ticketPriceCents: number;
   maxTicketCount: number;
   soldTicketCount: number;
   availableTickets: number;
+  maxTicketsPerUser: number;
   commissionPercentage: number;
   prizePoolCents: number;
   state: string;
@@ -20,7 +22,7 @@ export default function GamesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingGame, setEditingGame] = useState<Game | null>(null);
-  const [editForm, setEditForm] = useState({ gameName: '', scheduledStartTime: '', ticketPriceCents: 0, maxTicketCount: 0, commissionPercentage: 0 });
+  const [editForm, setEditForm] = useState({ gameName: '', isFeatured: false, scheduledStartTime: '', ticketPriceCents: 0, maxTicketCount: 0, maxTicketsPerUser: 6, commissionPercentage: 0 });
 
   useEffect(() => {
     fetchGames();
@@ -51,25 +53,29 @@ export default function GamesPage() {
     setEditingGame(game);
     setEditForm({
       gameName: game.gameName ?? '',
+      isFeatured: game.isFeatured,
       scheduledStartTime: new Date(game.scheduledStartTime).toISOString().slice(0, 16),
       ticketPriceCents: game.ticketPriceCents,
       maxTicketCount: game.maxTicketCount,
+      maxTicketsPerUser: game.maxTicketsPerUser ?? 6,
       commissionPercentage: game.commissionPercentage,
     });
   };
-
+ 
   const handleSaveEdit = async () => {
     if (!editingGame) return;
     try {
       await api.patch(`/admin/games/${editingGame.id}`, {
         gameName: editForm.gameName,
+        isFeatured: editForm.isFeatured,
         scheduledStartTime: new Date(editForm.scheduledStartTime).toISOString(),
         ticketPriceCents: editForm.ticketPriceCents,
         maxTicketCount: editForm.maxTicketCount,
+        maxTicketsPerUser: editForm.maxTicketsPerUser,
         commissionPercentage: editForm.commissionPercentage,
       });
       setEditingGame(null);
-      fetchGames(); // Refresh list
+      fetchGames();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to update game');
     }
@@ -114,11 +120,17 @@ export default function GamesPage() {
               {games.map((game) => (
                 <tr key={game.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 font-medium text-gray-800">
-                    <span title={game.id}>{game.gameName}</span>
+                    <div className="flex items-center gap-2">
+                      {game.isFeatured && <span title="Featured">⭐</span>}
+                      <span title={game.id}>{game.gameName}</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-gray-600">{new Date(game.scheduledStartTime).toLocaleString()}</td>
                   <td className="px-6 py-4 text-gray-600">₹{(game.ticketPriceCents / 100).toFixed(0)}</td>
-                  <td className="px-6 py-4 text-gray-600">{game.soldTicketCount}/{game.maxTicketCount}</td>
+                  <td className="px-6 py-4 text-gray-600">
+                    <div>{game.soldTicketCount}/{game.maxTicketCount}</div>
+                    <div className="text-xs text-gray-400">Limit: {game.maxTicketsPerUser ?? 6}/user</div>
+                  </td>
                   <td className="px-6 py-4 text-gray-600">₹{(game.prizePoolCents / 100).toFixed(0)}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
@@ -173,6 +185,27 @@ export default function GamesPage() {
                   maxLength={100}
                 />
               </div>
+
+              {/* Featured Toggle */}
+              <div
+                onClick={() => setEditForm({ ...editForm, isFeatured: !editForm.isFeatured })}
+                className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                  editForm.isFeatured ? 'border-amber-400 bg-amber-50' : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                }`}
+              >
+                <span className="text-lg">{editForm.isFeatured ? '⭐' : '☆'}</span>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-800">Featured Game</p>
+                  <p className="text-xs text-gray-500">Shown in the highlighted banner at the top of the app</p>
+                </div>
+                <div className={`w-10 h-5 rounded-full relative transition-colors ${
+                  editForm.isFeatured ? 'bg-amber-400' : 'bg-gray-300'
+                }`}>
+                  <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                    editForm.isFeatured ? 'left-5' : 'left-0.5'
+                  }`} />
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
                 <input
@@ -198,6 +231,17 @@ export default function GamesPage() {
                   value={editForm.maxTicketCount}
                   onChange={(e) => setEditForm({ ...editForm, maxTicketCount: Number(e.target.value) })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Max Tickets Per User</label>
+                <input
+                  type="number"
+                  value={editForm.maxTicketsPerUser}
+                  onChange={(e) => setEditForm({ ...editForm, maxTicketsPerUser: Number(e.target.value) })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  min={1}
+                  max={10}
                 />
               </div>
               <div>

@@ -196,7 +196,7 @@ router.delete('/games/:id', async (req: Request, res: Response, next: NextFuncti
 router.patch('/games/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const { gameName, scheduledStartTime, ticketPriceCents, maxTicketCount, commissionPercentage } = req.body;
+    const { gameName, isFeatured, scheduledStartTime, ticketPriceCents, maxTicketCount, commissionPercentage, maxTicketsPerUser } = req.body;
 
     const game = await prisma.game.findUnique({ where: { id } });
     if (!game) {
@@ -208,14 +208,24 @@ router.patch('/games/:id', async (req: Request, res: Response, next: NextFunctio
       return;
     }
 
+    if (maxTicketsPerUser !== undefined) {
+      const limit = Number(maxTicketsPerUser);
+      if (isNaN(limit) || limit < 1 || limit > 10) {
+        res.status(400).json({ status: 400, code: 'VALIDATION_ERROR', message: 'Max tickets per user must be between 1 and 10', retryable: false });
+        return;
+      }
+    }
+
     const updated = await prisma.game.update({
       where: { id },
       data: {
         ...(gameName !== undefined && { gameName: gameName || null }),
+        ...(isFeatured !== undefined && { isFeatured: Boolean(isFeatured) }),
         ...(scheduledStartTime && { scheduledStartTime: new Date(scheduledStartTime) }),
         ...(ticketPriceCents && { ticketPriceCents }),
         ...(maxTicketCount && { maxTicketCount }),
         ...(commissionPercentage && { commissionPercentage }),
+        ...(maxTicketsPerUser !== undefined && { maxTicketsPerUser: Number(maxTicketsPerUser) }),
       },
     });
 
