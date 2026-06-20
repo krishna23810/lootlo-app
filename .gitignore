@@ -1,0 +1,17 @@
+.kiro
+.vscode
+
+admin/node_modules
+admin/.env
+admin/.env.production
+
+client/node_modules
+client/.env
+client/.env.production
+
+web-admin/node_modules
+web-admin/.env
+web-admin/.env.production
+
+.env
+.env.production

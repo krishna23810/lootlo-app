@@ -1,0 +1,251 @@
+// Prisma schema for Live Housie Game
+// Using PostgreSQL as the database provider
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum GameState {
+  upcoming
+  live
+  completed
+  cancelled
+}
+
+enum WinningPattern {
+  full_house
+  top_line
+  middle_line
+  bottom_line
+  early_five
+  four_corners
+}
+
+enum TransactionType {
+  ticket_purchase
+  winning
+  top_up
+  withdrawal
+  withdrawal_hold
+  withdrawal_release
+}
+
+enum WithdrawalStatus {
+  pending
+  approved
+  processing
+  completed
+  rejected
+}
+
+enum ClaimStatus {
+  pending
+  valid
+  invalid
+  already_claimed
+}
+
+enum AdminRole {
+  super_admin
+  game_manager
+  draw_host
+  finance
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model Admin {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique @db.VarChar(254)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  name         String    @db.VarChar(100)
+  role         AdminRole @default(game_manager)
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz
+
+  @@map("admins")
+}
+
+model User {
+  id                  String   @id @default(uuid()) @db.Uuid
+  email               String   @db.VarChar(254)
+  mobile              String   @db.VarChar(16)
+  passwordHash        String   @map("password_hash") @db.VarChar(255)
+  displayName         String   @map("display_name") @db.VarChar(30)
+  failedLoginAttempts Int      @default(0) @map("failed_login_attempts")
+  lockedUntil         DateTime? @map("locked_until") @db.Timestamptz
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  wallet              Wallet?
+  tickets             Ticket[]
+  sessions            Session[]
+  winningClaims       WinningClaim[]
+  withdrawalRequests  WithdrawalRequest[]
+  notifications       Notification[]
+
+  @@unique([email], map: "idx_users_email_lower")
+  @@unique([mobile], map: "idx_users_mobile")
+  @@map("users")
+}
+
+model Wallet {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  balanceCents   BigInt   @default(0) @map("balance_cents")
+  heldAmountCents BigInt  @default(0) @map("held_amount_cents")
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   Transaction[]
+
+  @@map("wallets")
+}
+
+model Transaction {
+  id            String          @id @default(uuid()) @db.Uuid
+  walletId      String          @map("wallet_id") @db.Uuid
+  type          TransactionType
+  amountCents   BigInt          @map("amount_cents")
+  referenceId   String          @map("reference_id") @db.VarChar(255)
+  referenceType String          @map("reference_type") @db.VarChar(50)
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz
+
+  wallet        Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId, createdAt(sort: Desc)], map: "idx_transactions_wallet_created")
+  @@map("transactions")
+}
+
+model Game {
+  id                  String    @id @default(uuid()) @db.Uuid
+  scheduledStartTime  DateTime  @map("scheduled_start_time") @db.Timestamptz
+  ticketPriceCents    Int       @map("ticket_price_cents")
+  maxTicketCount      Int       @map("max_ticket_count")
+  soldTicketCount     Int       @default(0) @map("sold_ticket_count")
+  commissionPercentage Int      @map("commission_percentage")
+  prizePoolCents      BigInt    @default(0) @map("prize_pool_cents")
+  state               GameState @default(upcoming)
+  prizeConfig         Json      @map("prize_config") @db.JsonB
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  tickets             Ticket[]
+  drawEvents          DrawEvent[]
+  winningClaims       WinningClaim[]
+
+  @@index([state, scheduledStartTime], map: "idx_games_state_start")
+  @@map("games")
+}
+
+model Ticket {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  gameId      String   @map("game_id") @db.Uuid
+  grid        Json     @db.JsonB
+  purchasedAt DateTime @default(now()) @map("purchased_at") @db.Timestamptz
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  winningClaims WinningClaim[]
+
+  @@index([userId, gameId], map: "idx_tickets_user_game")
+  @@map("tickets")
+}
+
+model DrawEvent {
+  id       String   @id @default(uuid()) @db.Uuid
+  gameId   String   @map("game_id") @db.Uuid
+  number   Int
+  position Int
+  drawnAt  DateTime @default(now()) @map("drawn_at") @db.Timestamptz
+
+  game     Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, number], map: "idx_draw_events_game_number")
+  @@index([gameId, position], map: "idx_draw_events_game_position")
+  @@map("draw_events")
+}
+
+model WinningClaim {
+  id               String         @id @default(uuid()) @db.Uuid
+  gameId           String         @map("game_id") @db.Uuid
+  ticketId         String         @map("ticket_id") @db.Uuid
+  userId           String         @map("user_id") @db.Uuid
+  pattern          WinningPattern
+  status           ClaimStatus    @default(pending)
+  prizeAmountCents BigInt         @default(0) @map("prize_amount_cents")
+  claimedAtPosition Int           @map("claimed_at_position")
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  game             Game           @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  ticket           Ticket         @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([gameId, pattern], map: "idx_winning_claims_game_pattern")
+  @@map("winning_claims")
+}
+
+model WithdrawalRequest {
+  id                 String           @id @default(uuid()) @db.Uuid
+  userId             String           @map("user_id") @db.Uuid
+  amountCents        BigInt           @map("amount_cents")
+  paymentDestination String           @map("payment_destination") @db.VarChar(500)
+  status             WithdrawalStatus @default(pending)
+  rejectionReason    String?          @map("rejection_reason") @db.Text
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  processedAt        DateTime?        @map("processed_at") @db.Timestamptz
+
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_withdrawal_requests_user")
+  @@map("withdrawal_requests")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tokenHash String   @map("token_hash") @db.VarChar(255)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  isValid   Boolean  @default(true) @map("is_valid")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash], map: "idx_sessions_token_hash", type: Hash)
+  @@map("sessions")
+}
+
+// ─── Notifications ───────────────────────────────────────────────────────────
+
+enum NotificationType {
+  game_starting_soon
+  game_started
+  pattern_won
+  winnings_credited
+  withdrawal_approved
+  withdrawal_rejected
+  new_game_announced
+  system_message
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  type      NotificationType
+  title     String           @db.VarChar(200)
+  body      String           @db.Text
+  data      Json?            @db.JsonB   // Extra payload (gameId, amount, etc.)
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt(sort: Desc)], map: "idx_notifications_user_unread")
+  @@map("notifications")
+}

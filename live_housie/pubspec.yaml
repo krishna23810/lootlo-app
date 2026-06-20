@@ -1,0 +1,65 @@
+name: live_housie
+description: "Lootlo - Real-time multiplayer Tambola/Housie game platform"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State Management - Riverpod with code generation
+  flutter_riverpod: ^3.0.3
+  riverpod_annotation: ^3.0.3
+
+  # HTTP Client
+  dio: ^5.7.0
+
+  # WebSocket (will re-enable later)
+  # socket_io_client: ^3.0.2
+
+  # WebRTC (will re-enable later)
+  # flutter_webrtc: ^0.12.8
+
+  # Local Storage
+  hive_flutter: ^1.1.0
+
+  # Routing
+  go_router: ^14.8.1
+
+  # Skeleton loading (disabled - incompatible with current Flutter SDK)
+  # skeletonizer: ^1.4.0
+
+  # Notifications (will re-enable later — crashes emulator)
+  # flutter_local_notifications: ^18.0.1
+  # flutter_background_service: ^5.0.12
+  # flutter_background_service_android: ^6.2.8
+
+  # Immutable models & serialization
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+
+  # Riverpod code generation
+  riverpod_generator: ^3.0.3
+  riverpod_lint: ^3.0.3
+
+  # Build runner for code generation
+  build_runner: ^2.4.14
+
+  # Freezed code generation
+  freezed: ^3.2.3
+  json_serializable: ^6.9.4
+
+flutter:
+  uses-material-design: true
