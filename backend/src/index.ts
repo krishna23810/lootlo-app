@@ -30,7 +30,7 @@ const PORT = process.env.PORT || 3000;
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://10.0.2.2:3000', 'https://unworn-embassy-glowworm.ngrok-free.dev'],
+    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://10.0.2.2:3000', 'https://unworn-embassy-glowworm.ngrok-free.dev', 'https://admin.kktechsolution.app'],
     credentials: true,
   }
 });
@@ -40,7 +40,7 @@ const io = new Server(server, {
 app.use(express.json());
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://10.0.2.2:3000', 'https://unworn-embassy-glowworm.ngrok-free.dev'],
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://10.0.2.2:3000', 'https://unworn-embassy-glowworm.ngrok-free.dev', 'https://admin.kktechsolution.app'],
   credentials: true,
 }));
 
