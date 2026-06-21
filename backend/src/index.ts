@@ -105,6 +105,15 @@ io.on('connection', (socket) => {
     console.log(`Socket ${socket.id} joined room ${room}`);
   });
 
+  socket.on('chat:send', (data: { room: string; message: string; displayName: string }) => {
+    io.to(data.room).emit('chat:message', {
+      userId: socket.id,
+      displayName: data.displayName,
+      message: data.message,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   socket.on('disconnect', () => {
     console.log(`Socket disconnected: ${socket.id}`);
   });

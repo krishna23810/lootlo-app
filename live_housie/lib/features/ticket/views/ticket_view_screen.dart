@@ -592,7 +592,7 @@ class _TicketViewScreenState extends ConsumerState<TicketViewScreen> {
                                 height: 52,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    LiveStreamView.show(context, game.id, game.gameName);
+                                    context.push('/games/${game.id}/live');
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF4648D4),
