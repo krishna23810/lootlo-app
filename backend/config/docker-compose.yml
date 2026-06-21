@@ -1,19 +1,48 @@
-version: '3'
+version: '3.8'
+
 services:
+  # 1. PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: lootlo-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: YourSecurePassword123!
+      POSTGRES_DB: live_housie
+    ports:
+      - "54320:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  # 2. Redis Cache Server
+  redis:
+    image: redis:7-alpine
+    container_name: lootlo-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+
+  # 3. Janus WebRTC Media Gateway
   janus-gateway:
     image: 'sucwangsr/janus-webrtc-gateway-docker:latest'
-    # Start ONLY Janus, skipping Nginx
+    container_name: lootlo-janus
+    restart: always
     command: ["/usr/local/bin/janus", "-F", "/usr/local/etc/janus"]
     ports:
       - "8088:8088"
       - "8188:8188"
       - "10000-10200:10000-10200/udp"
     volumes:
-      # Mount your local config folder (relative to this file)
       - "./conf/janus.jcfg:/usr/local/etc/janus/janus.jcfg"
       - "./conf/janus.transport.http.jcfg:/usr/local/etc/janus/janus.transport.http.jcfg"
       - "./conf/janus.transport.websockets.jcfg:/usr/local/etc/janus/janus.transport.websockets.jcfg"
       - "./conf/janus.plugin.streaming.jcfg:/usr/local/etc/janus/janus.plugin.streaming.jcfg"
-      # Mount SSL certificates for native HTTPS/WSS
-      - "./certs:/usr/share/certificates:ro"
-    restart: always   
+    network_mode: "host"
+
+volumes:
+  postgres-data:
+  redis-data:
