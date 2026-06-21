@@ -7,14 +7,19 @@ import { PrismaClient } from '@prisma/client';
 
 let prisma: PrismaClient;
 
+const logLevels: ('query' | 'info' | 'warn' | 'error')[] = ['warn', 'error'];
+if (process.env.LOG_QUERIES === 'true') {
+  logLevels.push('query');
+}
+
 if (process.env.NODE_ENV === 'production') {
-  prisma = new PrismaClient();
+  prisma = new PrismaClient({ log: logLevels });
 } else {
   // In development, reuse client across hot-reloads to avoid too many connections
   const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
   if (!globalForPrisma.prisma) {
     globalForPrisma.prisma = new PrismaClient({
-      log: ['query', 'warn', 'error'],
+      log: logLevels,
     });
   }
   prisma = globalForPrisma.prisma;
