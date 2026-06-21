@@ -1,0 +1,6 @@
+general: {
+    ws = true
+    wss = false  # Set to false for local dev without certs
+    ws_port = 8188
+    # secure = false # Ensure this is false if wss is false
+}   

@@ -30,7 +30,7 @@ export default function GamesPage() {
 
   const fetchGames = async () => {
     try {
-      const res = await api.get('/games');
+      const res = await api.get('/admin/games');
       setGames(res.data.data);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch games');
@@ -133,16 +133,26 @@ export default function GamesPage() {
                   </td>
                   <td className="px-6 py-4 text-gray-600">₹{(game.prizePoolCents / 100).toFixed(0)}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
                       game.state === 'upcoming' ? 'bg-blue-100 text-blue-700' :
-                      game.state === 'live' ? 'bg-green-100 text-green-700' :
+                      game.state === 'live' ? 'bg-rose-100 text-rose-700 animate-pulse font-bold' :
+                      game.state === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                      game.state === 'cancelled' ? 'bg-gray-100 text-gray-600' :
                       'bg-gray-100 text-gray-700'
                     }`}>
                       {game.state}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
+                      {(game.state === 'upcoming' || game.state === 'live') && (
+                        <Link
+                          to={`/games/${game.id}/host`}
+                          className="px-3 py-1 text-xs bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 font-medium transition-colors"
+                        >
+                          Host Live
+                        </Link>
+                      )}
                       <button
                         onClick={() => handleEdit(game)}
                         className="px-3 py-1 text-xs bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 font-medium transition-colors"

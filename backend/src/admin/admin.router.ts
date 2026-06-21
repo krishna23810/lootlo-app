@@ -18,9 +18,10 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { requireAuth, requireAdmin } from '../auth/auth.middleware';
-import { createGame } from '../game/game.service';
+import { createGame, listAllGames } from '../game/game.service';
 import { adminLogin } from './admin-auth.service';
 import { prisma } from '../common/prisma';
+import { drawService } from '../draw/draw.service';
 
 const router = Router();
 
@@ -82,6 +83,19 @@ router.post('/games', async (req: Request, res: Response, next: NextFunction) =>
   try {
     const game = await createGame(req.body);
     res.status(201).json({ success: true, data: game });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/admin/games
+ * List all games (admin only).
+ */
+router.get('/games', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const games = await listAllGames();
+    res.json({ success: true, data: games });
   } catch (error) {
     next(error);
   }
@@ -230,6 +244,48 @@ router.patch('/games/:id', async (req: Request, res: Response, next: NextFunctio
     });
 
     res.json({ success: true, data: updated });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/admin/games/:id/start
+ * Start a live game draw session (admin only).
+ */
+router.post('/games/:id/start', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    await drawService.startSession(id);
+    res.json({ success: true, message: 'Game draw session started' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/admin/games/:id/draw
+ * Draw a random number for the game (admin only).
+ */
+router.post('/games/:id/draw', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const result = await drawService.drawNumber(id);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/admin/games/:id/end
+ * End a live game draw session (admin only).
+ */
+router.post('/games/:id/end', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    await drawService.endSession(id);
+    res.json({ success: true, message: 'Game draw session ended' });
   } catch (error) {
     next(error);
   }

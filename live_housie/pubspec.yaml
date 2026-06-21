@@ -24,7 +24,7 @@ dependencies:
   # socket_io_client: ^3.0.2
 
   # WebRTC (will re-enable later)
-  # flutter_webrtc: ^0.12.8
+  flutter_webrtc: ^0.12.8
 
   # Local Storage
   hive_flutter: ^1.1.0

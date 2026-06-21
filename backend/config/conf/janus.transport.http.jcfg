@@ -1,0 +1,11 @@
+general: {
+    json = "compact"
+    base_path = "/janus"
+    http = true
+    port = 8088
+    https = false
+}
+
+cors: {
+    allow_origin = "*"
+}

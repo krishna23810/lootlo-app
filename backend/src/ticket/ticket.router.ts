@@ -9,6 +9,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { requireAuth } from '../auth/auth.middleware';
 import { purchaseTicket, getUserTickets } from './ticket.service';
+import { drawService } from '../draw/draw.service';
 
 const router = Router();
 
@@ -56,6 +57,40 @@ router.get('/mine', async (req: Request, res: Response, next: NextFunction) => {
     const gameId = req.query.gameId as string | undefined;
     const tickets = await getUserTickets(req.user!.userId, gameId);
     res.json({ success: true, data: tickets });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/tickets/:ticketId/claims
+ *
+ * Submit a winning claim for a specific pattern on a ticket.
+ * Request body: { gameId: "...", pattern: "..." }
+ */
+router.post('/:ticketId/claims', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { ticketId } = req.params;
+    const { gameId, pattern } = req.body;
+
+    if (!gameId || !pattern) {
+      res.status(400).json({
+        status: 400,
+        code: 'VALIDATION_ERROR',
+        message: 'gameId and pattern are required',
+        retryable: false,
+      });
+      return;
+    }
+
+    const result = await drawService.submitClaim(
+      req.user!.userId,
+      gameId,
+      ticketId,
+      pattern
+    );
+
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);
   }

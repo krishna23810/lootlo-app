@@ -3,10 +3,15 @@ class AppConstants {
   AppConstants._();
 
   static const String appName = 'Lootlo';
-  static const String baseUrl = 'https://unworn-embassy-glowworm.ngrok-free.dev/api';
-  static const String wsUrl = 'https://unworn-embassy-glowworm.ngrok-free.dev';
-// static const String baseUrl = 'http://10.0.2.2:3000/api';
-//   static const String wsUrl = 'http://10.0.2.2:3000';
+  // ─── For external device on same WiFi ───
+  static const String baseUrl = 'http://10.176.190.238:3000/api';
+  static const String wsUrl = 'http://10.176.190.238:3000';
+  // ─── For ngrok (signaling only, no video) ───
+  // static const String baseUrl = 'https://unworn-embassy-glowworm.ngrok-free.dev/api';
+  // static const String wsUrl = 'https://unworn-embassy-glowworm.ngrok-free.dev';
+  // ─── For Android emulator ───
+  // static const String baseUrl = 'http://10.0.2.2:3000/api';
+  // static const String wsUrl = 'http://10.0.2.2:3000';
   // Game constraints
   static const int maxTicketsPerUser = 6;
   static const int minTicketCount = 10;

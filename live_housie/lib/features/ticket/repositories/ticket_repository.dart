@@ -25,4 +25,17 @@ class TicketRepository extends BaseRepository {
     final List<dynamic> listJson = response.data['data'] as List<dynamic>;
     return listJson.map((json) => TicketModel.fromJson(json as Map<String, dynamic>)).toList();
   }
+
+  /// Submit a winning claim for a specific pattern.
+  Future<Map<String, dynamic>> submitClaim({
+    required String ticketId,
+    required String gameId,
+    required String pattern,
+  }) async {
+    final response = await dio.post('/tickets/$ticketId/claims', data: {
+      'gameId': gameId,
+      'pattern': pattern,
+    });
+    return response.data['data'] as Map<String, dynamic>;
+  }
 }

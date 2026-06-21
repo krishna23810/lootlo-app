@@ -162,6 +162,20 @@ export async function listUpcomingGames() {
   return games.map(formatGameResponse);
 }
 
+// ─── List All Games ──────────────────────────────────────────────────────────
+
+/**
+ * List all games including past, live, and cancelled ones (admin only).
+ * Sorted by scheduled start time (newest first).
+ */
+export async function listAllGames() {
+  const games = await prisma.game.findMany({
+    orderBy: { scheduledStartTime: 'desc' },
+  });
+
+  return games.map(formatGameResponse);
+}
+
 // ─── Get Single Game ─────────────────────────────────────────────────────────
 
 /**

@@ -1,0 +1,19 @@
+version: '3'
+services:
+  janus-gateway:
+    image: 'sucwangsr/janus-webrtc-gateway-docker:latest'
+    # Start ONLY Janus, skipping Nginx
+    command: ["/usr/local/bin/janus", "-F", "/usr/local/etc/janus"]
+    ports:
+      - "8088:8088"
+      - "8188:8188"
+      - "10000-10200:10000-10200/udp"
+    volumes:
+      # Mount your local config folder (relative to this file)
+      - "./conf/janus.jcfg:/usr/local/etc/janus/janus.jcfg"
+      - "./conf/janus.transport.http.jcfg:/usr/local/etc/janus/janus.transport.http.jcfg"
+      - "./conf/janus.transport.websockets.jcfg:/usr/local/etc/janus/janus.transport.websockets.jcfg"
+      - "./conf/janus.plugin.streaming.jcfg:/usr/local/etc/janus/janus.plugin.streaming.jcfg"
+      # Mount SSL certificates for native HTTPS/WSS
+      - "./certs:/usr/share/certificates:ro"
+    restart: always   

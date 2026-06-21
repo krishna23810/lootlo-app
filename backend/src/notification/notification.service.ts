@@ -42,6 +42,17 @@ export function setSocketIO(io: typeof socketIO): void {
   socketIO = io;
 }
 
+/**
+ * Broadcast an event to all sockets in a room.
+ */
+export function broadcastToRoom(room: string, event: string, data: unknown): void {
+  if (socketIO) {
+    socketIO.to(room).emit(event, data);
+  } else {
+    console.warn(`[Socket.io] Cannot broadcast to room ${room}: socketIO not initialized`);
+  }
+}
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface CreateNotificationInput {
