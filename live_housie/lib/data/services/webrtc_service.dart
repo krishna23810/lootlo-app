@@ -29,6 +29,11 @@ class WebRTCService {
   /// Dynamic Janus HTTP base URL
   String get janusUrl {
     final baseUrl = AppConstants.baseUrl;
+    if (baseUrl.startsWith('https://')) {
+      // Secure production VPS setup via Nginx reverse proxy
+      final janusBase = baseUrl.replaceAll('/api', '');
+      return '$janusBase/janus';
+    }
     if (baseUrl.contains('ngrok')) {
       // Through tunnel proxy (signaling only — media won't work over ngrok)
       final janusBase = baseUrl.replaceAll('/api', '');
