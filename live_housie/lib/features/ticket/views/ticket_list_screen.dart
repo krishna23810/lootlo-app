@@ -6,7 +6,6 @@ import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../wallet/viewmodels/wallet_viewmodel.dart';
 import '../models/ticket_model.dart';
 import '../viewmodels/ticket_viewmodel.dart';
-import 'ticket_view_screen.dart';
 
 /// My Tickets Screen — shows list of games with tickets, tap to see ticket details.
 class TicketListScreen extends ConsumerStatefulWidget {
@@ -196,6 +195,11 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> with Single
     for (final ticket in tickets) {
       groupsMap.putIfAbsent(ticket.gameId, () => []).add(ticket);
     }
+
+    // Sort each group's tickets ascending by purchase time so index 0 is always the first purchased ticket
+    for (final group in groupsMap.values) {
+      group.sort((a, b) => a.purchasedAt.compareTo(b.purchasedAt));
+    }
     
     final groupsList = groupsMap.values.toList();
 
@@ -247,7 +251,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> with Single
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _buildGameGroupCard(
-              gameId: game.id,
+              ticketId: ticket.id,
               gameName: game.gameName,
               status: statusText,
               statusColor: statusColor,
@@ -263,7 +267,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> with Single
   }
 
   Widget _buildGameGroupCard({
-    required String gameId,
+    required String ticketId,
     required String gameName,
     required String status,
     required Color statusColor,
@@ -275,8 +279,7 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> with Single
     return InkWell(
       onTap: () {
         context.push(
-          '/tickets/game/$gameId',
-          extra: {'gameName': gameName},
+          '/tickets/$ticketId',
         );
       },
       borderRadius: BorderRadius.circular(16),

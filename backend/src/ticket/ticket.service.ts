@@ -186,6 +186,8 @@ export async function getUserTickets(userId: string, gameId?: string) {
           state: true,
           scheduledStartTime: true,
           ticketPriceCents: true,
+          prizePoolCents: true,
+          prizeConfig: true,
           drawEvents: {
             orderBy: { position: 'asc' },
             select: { number: true },
@@ -214,6 +216,8 @@ export async function getUserTickets(userId: string, gameId?: string) {
       state: t.game.state,
       scheduledStartTime: t.game.scheduledStartTime.toISOString(),
       ticketPriceCents: t.game.ticketPriceCents,
+      prizePoolCents: Number(t.game.prizePoolCents),
+      prizeConfig: t.game.prizeConfig,
       drawEvents: t.game.drawEvents.map((de) => de.number),
     },
     winningClaims: t.winningClaims.map((wc) => ({

@@ -106,6 +106,8 @@ class TicketGameModel {
   final String state;
   final DateTime scheduledStartTime;
   final int ticketPriceCents;
+  final int prizePoolCents;
+  final Map<String, dynamic> prizeConfig;
   final List<int>? _drawEvents;
 
   TicketGameModel({
@@ -114,6 +116,8 @@ class TicketGameModel {
     required this.state,
     required this.scheduledStartTime,
     required this.ticketPriceCents,
+    required this.prizePoolCents,
+    required this.prizeConfig,
     List<int>? drawEvents,
   }) : _drawEvents = drawEvents;
 
@@ -129,6 +133,8 @@ class TicketGameModel {
       state: json['state'] as String,
       scheduledStartTime: DateTime.parse(json['scheduledStartTime'] as String),
       ticketPriceCents: json['ticketPriceCents'] as int,
+      prizePoolCents: json['prizePoolCents'] as int? ?? 0,
+      prizeConfig: json['prizeConfig'] as Map<String, dynamic>? ?? const {},
       drawEvents: drawEvents,
     );
   }
@@ -136,4 +142,8 @@ class TicketGameModel {
   /// Format price from cents to display string
   String get formattedPrice =>
       '₹${(ticketPriceCents / 100).toStringAsFixed(0)}';
+
+  /// Format prize pool from cents to display string
+  String get formattedPrizePool =>
+      '₹${(prizePoolCents / 100).toStringAsFixed(0)}';
 }

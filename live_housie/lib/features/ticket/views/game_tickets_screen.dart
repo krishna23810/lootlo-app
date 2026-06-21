@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../models/ticket_model.dart';
 import '../viewmodels/ticket_viewmodel.dart';
 
 /// Screen listing all tickets purchased for a specific game.
@@ -15,21 +14,6 @@ class GameTicketsScreen extends ConsumerWidget {
     required this.gameId,
     required this.gameName,
   });
-
-  String _formatTime(DateTime dt) {
-    final hour24 = dt.hour;
-    final isPm = hour24 >= 12;
-    final hour12 = hour24 == 0 ? 12 : (hour24 > 12 ? hour24 - 12 : hour24);
-    final minute = dt.minute.toString().padLeft(2, '0');
-    final amPm = isPm ? 'PM' : 'AM';
-    return '$hour12:$minute $amPm';
-  }
-
-  String _formatDate(DateTime dt) {
-    final monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${monthNames[dt.month - 1]} ${dt.day}, ${dt.year}';
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ticketsAsync = ref.watch(userTicketsProvider(gameId: gameId));
@@ -81,35 +65,6 @@ class GameTicketsScreen extends ConsumerWidget {
               );
             }
 
-            final game = tickets.first.game;
-            String statusText = 'Upcoming';
-            Color statusColor = const Color(0xFF855300);
-            String subtitleText = '';
-            bool isLive = false;
-
-            if (game.state == 'live') {
-              statusText = 'LIVE';
-              statusColor = Colors.red;
-              subtitleText = 'Game is live now!';
-              isLive = true;
-            } else if (game.state == 'upcoming') {
-              final timeLeft = game.scheduledStartTime.difference(DateTime.now());
-              final minutes = timeLeft.inMinutes;
-              if (timeLeft.isNegative) {
-                statusText = 'Starting';
-              } else if (minutes > 60) {
-                statusText = 'In ${timeLeft.inHours}h ${minutes % 60}m';
-              } else {
-                statusText = 'In ${minutes}m';
-              }
-              statusColor = const Color(0xFF855300);
-              subtitleText = 'Starts at ${_formatTime(game.scheduledStartTime)}';
-            } else {
-              statusText = game.state.toUpperCase();
-              statusColor = const Color(0xFF464554);
-              subtitleText = 'Played on ${_formatDate(tickets.first.purchasedAt)}';
-            }
-
             return RefreshIndicator(
               onRefresh: () async {
                 ref.invalidate(userTicketsProvider(gameId: gameId));
@@ -127,7 +82,6 @@ class GameTicketsScreen extends ConsumerWidget {
                   // List is sorted desc by purchase time, but to number them index #1, #2, etc. in purchase order:
                   // Chronological index = tickets.length - index
                   final ticketIndex = tickets.length - index;
-                  final shortId = ticket.id.length > 8 ? ticket.id.substring(0, 8).toUpperCase() : ticket.id.toUpperCase();
 
                   final winningsText = ticket.winningsStatusText;
 
