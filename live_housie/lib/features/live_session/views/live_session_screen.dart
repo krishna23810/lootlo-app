@@ -105,9 +105,9 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
 
     _socketService!.on('game:draw_number', (data) {
       debugPrint('[LiveSessionScreen] game:draw_number received: $data');
-      if (data is Map<String, dynamic>) {
-        final num = data['number'] as int;
-        if (!_calledNumbers.contains(num)) {
+      if (data is Map) {
+        final num = int.tryParse(data['number']?.toString() ?? '') ?? 0;
+        if (num > 0 && !_calledNumbers.contains(num)) {
           setState(() {
             _calledNumbers.add(num);
             _recentNumbers.insert(0, num);
@@ -118,8 +118,8 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
 
     _socketService!.on('game:state_change', (data) {
       debugPrint('[LiveSessionScreen] game:state_change received: $data');
-      if (data is Map<String, dynamic> && mounted) {
-        final state = data['state'] as String;
+      if (data is Map && mounted) {
+        final state = data['state']?.toString() ?? '';
         if (state == 'completed' || state == 'cancelled') {
           _showGameFinishedDialog(state);
         }
@@ -128,10 +128,10 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
 
     _socketService!.on('game:claim_validation', (data) {
       debugPrint('[LiveSessionScreen] game:claim_validation received: $data');
-      if (data is Map<String, dynamic> && mounted) {
-        final displayName = data['displayName'] as String;
-        final pattern = data['pattern'] as String;
-        final status = data['status'] as String;
+      if (data is Map && mounted) {
+        final displayName = data['displayName']?.toString() ?? '';
+        final pattern = data['pattern']?.toString() ?? '';
+        final status = data['status']?.toString() ?? '';
 
         // Auto announce claims inside Chat
         setState(() {
@@ -152,17 +152,17 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
 
     _socketService!.on('chat:message', (data) {
       debugPrint('[LiveSessionScreen] chat:message received: $data');
-      if (data is Map<String, dynamic> && mounted) {
+      if (data is Map && mounted) {
         final userProfile = ref.read(userProfileProvider).value;
         final myName = userProfile?.displayName ?? 'Player';
-        final senderName = data['displayName'] as String;
+        final senderName = data['displayName']?.toString() ?? '';
 
         setState(() {
           _chatMessages.add({
             'displayName': senderName,
-            'message': data['message'] as String,
+            'message': data['message']?.toString() ?? '',
             'isMe': senderName == myName,
-            'timestamp': data['timestamp'] as String? ?? DateTime.now().toIso8601String(),
+            'timestamp': data['timestamp']?.toString() ?? DateTime.now().toIso8601String(),
           });
           _scrollToBottom();
         });

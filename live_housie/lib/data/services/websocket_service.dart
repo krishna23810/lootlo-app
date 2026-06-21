@@ -51,6 +51,10 @@ class WebSocketService {
         onDone: _onDisconnected,
         cancelOnError: true,
       );
+
+      // Establish Socket.io connection on root namespace
+      debugPrint('[WebSocketService] WebSocket connected, sending Socket.io namespace connect (40)...');
+      _ws!.add('40');
     } catch (e) {
       debugPrint('[WebSocketService] Connection error: $e');
       _trigger('error', e);
