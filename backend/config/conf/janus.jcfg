@@ -13,7 +13,7 @@ nat: {
     stun_server = "stun.l.google.com"
     stun_port = 19302
     # Advertise the host machine's LAN IP so devices on the same WiFi can reach the RTP ports
-    nat_1_1_mapping = "10.176.190.238"
+    nat_1_1_mapping = "74.225.254.111"
 }
 
 media: {

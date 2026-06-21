@@ -122,7 +122,18 @@ export default function LiveHostPage() {
   const janusHandleIdRef = useRef<number | null>(null);
   const keepaliveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const JANUS_URL = 'http://localhost:8088/janus';
+  const JANUS_URL = (() => {
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    if (apiUrl.startsWith('https://') || apiUrl.startsWith('http://')) {
+      try {
+        const url = new URL(apiUrl);
+        return `${url.protocol}//${url.host}/janus`;
+      } catch (e) {
+        // ignore
+      }
+    }
+    return 'http://localhost:8088/janus';
+  })();
 
   useEffect(() => {
     fetchGameDetails();
@@ -155,7 +166,18 @@ export default function LiveHostPage() {
   };
 
   const initSocketConnection = () => {
-    const wsBaseUrl = import.meta.env.VITE_WS_URL || 'http://localhost:3000';
+    const wsBaseUrl = (() => {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      if (apiUrl.startsWith('https://') || apiUrl.startsWith('http://')) {
+        try {
+          const url = new URL(apiUrl);
+          return `${url.protocol}//${url.host}`;
+        } catch (e) {
+          // ignore
+        }
+      }
+      return 'http://localhost:3000';
+    })();
     const socket = new SimpleSocket(wsBaseUrl);
     socketRef.current = socket;
 
