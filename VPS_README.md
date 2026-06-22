@@ -293,15 +293,24 @@ server {
 2. **`/socket.io/`**: Enables Socket.io WebSocket connections. Crucially forces HTTP/1.1 protocol and configures headers `Upgrade: WebSocket` and `Connection: Upgrade` to allow upgrading the HTTP socket tunnel. `proxy_read_timeout 86400` prevents Nginx from severing quiet socket feeds.
 3. **`/janus`**: Resolves SSL requests to raw Janus HTTP port `8088/janus`, allowing the mobile client to talk to Janus safely from an `https://` endpoint.
 
-### Apply Nginx Config Changes
+### Apply Nginx Config Changes (Using nginx.config from Repository)
+
+To apply the configuration using the `nginx.config` file included in your repository (located at `/opt/lootlo/nginx.config` on the VPS):
+
 ```bash
-# Link config to Nginx active configurations
+# 1. Copy the configuration file from your repository to Nginx configurations
+sudo cp /opt/lootlo/nginx.config /etc/nginx/sites-available/lootlo
+
+# 2. Disable Nginx's default site configuration (to prevent port 80/default conflicts)
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# 3. Link your custom config to Nginx's active configurations
 sudo ln -s /etc/nginx/sites-available/lootlo /etc/nginx/sites-enabled/
 
-# Test configuration syntax for errors
+# 4. Test configuration syntax for errors
 sudo nginx -t
 
-# Reload configuration parameters on Nginx daemon
+# 5. Reload and restart Nginx daemon
 sudo systemctl restart nginx
 ```
 
@@ -336,12 +345,26 @@ npx prisma migrate deploy
 npm run build
 
 # Start backend using PM2 manager
-pm2 start dist/main.js --name "lootlo-backend"
+pm2 start dist/index.js --name "lootlo-backend"
 
 # Persist and freeze active processes for system reboots
 pm2 save
 pm2 startup
 ```
+
+### What is PM2 and Why Are We Using It?
+
+**PM2 (Process Manager 2)** is a production-grade process manager for Node.js applications. In development, you typically run your server using commands like `npm run dev` or `node src/index.ts`, which run inside your active terminal session. If you close the terminal, log out of SSH, or if the code encounters an unhandled error, the process immediately terminates and the app goes offline.
+
+We use PM2 in our production VPS environment to solve these issues:
+
+1. **Daemonization (Background Run)**: PM2 runs the backend application in the background. You can safely disconnect your SSH terminal session, and the backend continues running.
+2. **Automatic Crash Recovery**: If the backend encounters an unhandled runtime error (e.g., a database connection drop or unexpected payload crash), PM2 instantly restarts the server process in milliseconds, keeping the app online.
+3. **System Reboot Survival**: If the VPS server is restarted or updated, PM2 registers with the server's init system (like systemd) to automatically boot up and relaunch the Lootlo API process on system startup.
+4. **Built-in Log Management**: PM2 handles all console logs (`console.log`, `console.error`) automatically. It separates standard logs from error logs and stores them in files, making debugging easy without cluttering your system disk.
+5. **Cluster Mode (Optional Scaling)**: PM2 can run multiple instances of the backend on all available CPU cores, load-balancing incoming API and socket traffic for higher performance.
+
+---
 
 ### Useful PM2 Monitoring Commands:
 ```bash
@@ -355,28 +378,91 @@ pm2 status
 pm2 restart lootlo-backend
 ```
 
+### Shutting Down All Services
+If you need to completely shut down and stop all running services on the VPS (for maintenance, server migration, or updates):
+
+```bash
+# 1. Stop the Node.js backend process running in PM2
+pm2 stop lootlo-backend
+
+# 2. Stop and spin down all Docker containers (PostgreSQL, Redis, and Janus Gateway)
+cd /opt/lootlo/backend/config
+sudo docker compose down
+
+# 3. Stop the Nginx reverse proxy server
+sudo systemctl stop nginx
+```
+
 ---
 
-## 7. Static Frontend Deployment
+## 7. Static Frontend & Landing Page Setup
 
-### React Admin Console
-1. Ensure `.env` is created in local `admin` directory with production URL:
+For Nginx to host the Admin Dashboard and the Landing Page, you must create their hosting directories on the VPS and configure proper user ownership permissions so files can be uploaded.
+
+### Step 1: Create Directories and Set Permissions on VPS
+Log into your VPS terminal and run:
+```bash
+# Create target web hosting directories
+sudo mkdir -p /var/www/lootlo-admin
+sudo mkdir -p /var/www/lootlo-landing
+
+# Give directory ownership to your VPS user (e.g. kktech) so you can SCP files without permission errors
+sudo chown -R kktech:kktech /var/www/lootlo-admin
+sudo chown -R kktech:kktech /var/www/lootlo-landing
+```
+
+---
+
+### Step 2: Deploy React Admin Console
+The Admin Console is built locally on your development machine and uploaded to the VPS.
+
+1. **Configure Environment Variables**:
+   In your local `admin/` directory, create or edit `.env` and set the production backend API endpoint:
    ```env
    VITE_API_URL=https://api.kktechsolution.app/api
    ```
-2. Build the project locally:
+
+2. **Build the Admin App Locally**:
+   Run these commands inside your local `admin/` directory:
    ```bash
+   npm install
    npm run build
    ```
-3. Copy local `dist` bundle directly to server host root `/var/www/lootlo-admin`:
+   This generates a compiled, static `dist/` production folder.
+
+3. **Upload to the VPS**:
+   Upload the compiled files using secure copy (`scp`) from your local PC terminal:
    ```bash
-   scp -r dist/* kktech@vps_ip_address:/var/www/lootlo-admin/
+   scp -r dist/* kktech@YOUR_VPS_IP_ADDRESS:/var/www/lootlo-admin/
    ```
 
-### Landing Page HTML
-Copy the static files (`index.html`, assets) to the landing web root:
+---
+
+### Step 3: Deploy Lootlo Landing Page
+The landing page consists of static HTML and asset files found in the `landing/` directory.
+
+#### Option A: Deploy directly from the VPS repository clone (Easiest)
+If your git repository is cloned on the VPS at `/opt/lootlo`:
 ```bash
-# Perform on VPS to verify landing page files are in place
+# Copy landing files directly on the server
+cp -r /opt/lootlo/landing/* /var/www/lootlo-landing/
+```
+
+#### Option B: Upload from your local Windows PC
+Run this command from your local repository root folder:
+```bash
+scp -r landing/* kktech@YOUR_VPS_IP_ADDRESS:/var/www/lootlo-landing/
+```
+
+---
+
+### Step 4: Verify Deployment Directories
+Verify that the files exist in the target paths on the VPS:
+```bash
+# Verify Admin files (should see index.html, assets, etc.)
+ls -la /var/www/lootlo-admin/
+
+# Verify Landing files (should see index.html, assets, etc.)
 ls -la /var/www/lootlo-landing/
 ```
 

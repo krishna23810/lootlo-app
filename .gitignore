@@ -17,5 +17,3 @@ web-admin/.env.production
 .env.production
 
 .idea
-
-lootlo-server_key.pem
