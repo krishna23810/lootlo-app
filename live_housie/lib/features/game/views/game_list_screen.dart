@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../../core/widgets/shimmer_skeleton.dart';
 import '../models/game_model.dart';
 import '../viewmodels/game_viewmodel.dart';
 import '../../wallet/viewmodels/wallet_viewmodel.dart';
+import '../../notification/viewmodels/notification_viewmodel.dart';
 import 'game_detail_screen.dart';
 
 /// Games List Screen — redesigned to match the Lootlo mockup.
@@ -50,6 +52,38 @@ class GameListScreen extends ConsumerWidget {
                     ),
                   ),
                   const Spacer(),
+                  // Notifications Badge
+                  GestureDetector(
+                    onTap: () => context.push('/notifications'),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE6E8EA),
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          const Icon(Icons.notifications_none_rounded, color: Color(0xFF4648D4), size: 20),
+                          if (ref.watch(unreadNotificationsCountProvider) > 0)
+                            Positioned(
+                              top: 6,
+                              right: 6,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
                   // Wallet Badge
                   GestureDetector(
                     onTap: () => context.push('/wallet'),
@@ -119,7 +153,11 @@ class GameListScreen extends ConsumerWidget {
               child: RefreshIndicator(
                 onRefresh: () async {
                   ref.invalidate(gameListProvider);
-                  await ref.read(gameListProvider.future);
+                  ref.invalidate(notificationsProvider);
+                  await Future.wait([
+                    ref.read(gameListProvider.future),
+                    ref.read(notificationsProvider.future),
+                  ]);
                 },
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -148,7 +186,9 @@ class GameListScreen extends ConsumerWidget {
 
                       // ─── Game Cards ────────────────────────────
                       gamesAsync.when(
-                        loading: () => const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator())),
+                        loading: () => Column(
+                          children: List.generate(3, (index) => const GameCardSkeleton()),
+                        ),
                         error: (err, _) => Center(
                           child: Column(
                             children: [

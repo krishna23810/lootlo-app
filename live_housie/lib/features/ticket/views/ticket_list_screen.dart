@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../../core/widgets/shimmer_skeleton.dart';
 import '../../wallet/viewmodels/wallet_viewmodel.dart';
 import '../models/ticket_model.dart';
 import '../viewmodels/ticket_viewmodel.dart';
@@ -95,7 +96,14 @@ class _TicketListScreenState extends ConsumerState<TicketListScreen> with Single
 
             // ─── Tab Switcher & Content ──────────────────────────
             ticketsAsync.when(
-              loading: () => const Expanded(child: Center(child: CircularProgressIndicator(color: Color(0xFF6063EE)))),
+              loading: () => Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Column(
+                    children: List.generate(4, (index) => const TicketGroupCardSkeleton()),
+                  ),
+                ),
+              ),
               error: (err, _) => Expanded(
                 child: Center(
                   child: Column(

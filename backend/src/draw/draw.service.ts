@@ -2,7 +2,7 @@ import { prisma } from '../common/prisma';
 import { addDrawnNumber, clearGameCache } from './draw-cache';
 import { validateClaim } from './pattern-detector';
 import { janusClient } from '../common/janus.client';
-import { broadcastToRoom } from '../notification/notification.service';
+import { broadcastToRoom, sendNotification, sendBulkNotification } from '../notification/notification.service';
 import {
   notFoundError,
   validationError,
@@ -38,6 +38,26 @@ export const drawService = {
     // Broadcast live state change to socket clients
     broadcastToRoom(`game:${gameId}`, 'game:state_change', { gameId, state: 'live' });
     broadcastToRoom('lobby', 'game:state_change', { gameId, state: 'live' });
+
+    // Notify all ticket holders that the game is now live
+    try {
+      const tickets = await prisma.ticket.findMany({
+        where: { gameId },
+        select: { userId: true },
+      });
+      const uniqueUserIds = Array.from(new Set(tickets.map((t) => t.userId)));
+      if (uniqueUserIds.length > 0) {
+        await sendBulkNotification(
+          uniqueUserIds,
+          'game_started',
+          '🔴 Game is Live!',
+          `The host has started "${game.gameName}". Join the game room now to play!`,
+          { gameId }
+        );
+      }
+    } catch (err) {
+      console.error('[Notification Error] Failed to send bulk game start notification:', err);
+    }
   },
 
   /**
@@ -247,6 +267,19 @@ export const drawService = {
       status: 'valid',
       prizeAmountCents: Number(prizeAmountCents),
     });
+
+    // 9. Send persistent notification to the winning user
+    try {
+      await sendNotification({
+        userId,
+        type: 'pattern_won',
+        title: '🏆 Pattern Won!',
+        body: `Congratulations! Your claim for "${pattern}" in "${game.gameName}" is verified. You won ₹${(Number(prizeAmountCents) / 100).toFixed(2)}!`,
+        data: { gameId, pattern, prizeAmountCents: Number(prizeAmountCents) },
+      });
+    } catch (err) {
+      console.error('[Notification Error] Failed to send winning notification:', err);
+    }
 
     return {
       id: claim.id,

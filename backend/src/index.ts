@@ -21,16 +21,21 @@ import { gameRouter } from './game/game.router';
 import { walletRouter } from './wallet/wallet.router';
 import { ticketRouter } from './ticket/ticket.router';
 import { adminRouter } from './admin/admin.router';
+import { notificationRouter } from './notification/notification.router';
 import { errorHandler } from './common/error-handler';
 import { apiLimiter } from './common/rate-limiter';
 import { setSocketIO } from './notification/notification.service';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+  : ['http://localhost:5173', 'http://localhost:3000', 'http://10.0.2.2:3000', 'https://admin.kktechsolution.app'];
+
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://10.0.2.2:3000', 'https://unworn-embassy-glowworm.ngrok-free.dev', 'https://admin.kktechsolution.app'],
+    origin: allowedOrigins,
     credentials: true,
   }
 });
@@ -40,9 +45,10 @@ const io = new Server(server, {
 app.use(express.json());
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://10.0.2.2:3000', 'https://unworn-embassy-glowworm.ngrok-free.dev', 'https://admin.kktechsolution.app'],
+  origin: allowedOrigins,
   credentials: true,
 }));
+
 
 app.use(apiLimiter);
 
@@ -67,6 +73,9 @@ app.use('/api/tickets', ticketRouter);
 
 // Admin routes — prefixed with /api/admin (all require admin auth)
 app.use('/api/admin', adminRouter);
+
+// Notification routes — prefixed with /api/notifications
+app.use('/api/notifications', notificationRouter);
 
 // ─── Janus Reverse Proxy ──────────────────────────────────────────────────────
 // Proxy /janus/* requests to the local Janus Gateway so a single tunnel can serve both API and WebRTC signaling

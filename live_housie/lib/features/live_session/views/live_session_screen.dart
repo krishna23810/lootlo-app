@@ -11,6 +11,8 @@ import '../../ticket/models/ticket_model.dart';
 import '../../ticket/repositories/ticket_repository.dart';
 import '../../ticket/viewmodels/ticket_viewmodel.dart';
 import '../../profile/viewmodels/profile_viewmodel.dart';
+import '../../notification/models/notification_model.dart';
+import '../../notification/viewmodels/notification_viewmodel.dart';
 
 class LiveSessionScreen extends ConsumerStatefulWidget {
   final String gameId;
@@ -166,6 +168,59 @@ class _LiveSessionScreenState extends ConsumerState<LiveSessionScreen> {
           });
           _scrollToBottom();
         });
+      }
+    });
+
+    _socketService!.on('notification:new', (data) {
+      debugPrint('[LiveSessionScreen] notification:new received: $data');
+      if (data is Map && mounted) {
+        try {
+          final jsonMap = Map<String, dynamic>.from(data);
+          final notification = NotificationModel.fromJson(jsonMap);
+          
+          // Inject into list state
+          ref.read(notificationsProvider.notifier).insertNotification(notification);
+
+          // Show in-app banner alert (SnackBar)
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFF1E2130),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              behavior: SnackBarBehavior.floating,
+              content: Row(
+                children: [
+                  const Icon(Icons.notifications_active_rounded, color: Color(0xFFFFB03A), size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          notification.title,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        Text(
+                          notification.body,
+                          style: const TextStyle(color: Colors.white70, fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              action: SnackBarAction(
+                label: 'VIEW',
+                textColor: const Color(0xFF4C50E1),
+                onPressed: () => context.push('/notifications'),
+              ),
+            ),
+          );
+        } catch (e) {
+          debugPrint('[LiveSessionScreen] Failed to parse dynamic notification: $e');
+        }
       }
     });
 

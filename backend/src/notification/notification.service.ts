@@ -29,6 +29,7 @@
 
 import { prisma } from '../common/prisma';
 import { Prisma } from '@prisma/client';
+import crypto from 'crypto';
 
 // This will be set by the Socket.io server when it initializes
 // Allows this service to push to connected users
@@ -129,10 +130,13 @@ export async function sendBulkNotification(
   if (socketIO) {
     for (const userId of userIds) {
       socketIO.to(`user:${userId}`).emit('notification:new', {
+        id: crypto.randomUUID(),
+        userId,
         type,
         title,
         body,
         data,
+        isRead: false,
         createdAt: new Date().toISOString(),
       });
     }

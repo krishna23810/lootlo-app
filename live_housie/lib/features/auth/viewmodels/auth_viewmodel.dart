@@ -16,6 +16,7 @@
 
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../data/services/background_notification_service.dart';
 import '../../../data/services/local_storage_service.dart';
 import '../models/auth_response.dart';
 import '../repositories/auth_repository.dart';
@@ -162,6 +163,8 @@ class AuthViewModel extends _$AuthViewModel {
     }
 
     await LocalStorageService.clearAuth();
+    // Stop background service socket sync on logout
+    BackgroundNotificationService.sendCredentials(null, null);
     state = AuthInitial();
   }
 
@@ -169,8 +172,12 @@ class AuthViewModel extends _$AuthViewModel {
   Future<void> _saveAuthData(AuthResponse response) async {
     await LocalStorageService.saveToken(response.accessToken);
     await LocalStorageService.saveRefreshToken(response.refreshToken);
+    await LocalStorageService.saveUserId(response.user.id);
     await LocalStorageService.saveEmail(response.user.email);
     await LocalStorageService.saveDisplayName(response.user.displayName);
+    
+    // Sync credentials to background service to start socket connection
+    BackgroundNotificationService.sendCredentials(response.user.id, response.accessToken);
   }
 
   /// Convert Dio errors to user-friendly AuthError state.

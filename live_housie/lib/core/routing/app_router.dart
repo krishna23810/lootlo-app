@@ -13,6 +13,7 @@ import '../../features/ticket/views/game_tickets_screen.dart';
 import '../../features/wallet/views/wallet_screen.dart';
 import '../../features/live_session/views/live_session_screen.dart';
 import '../../features/profile/views/profile_screen.dart';
+import '../../features/notification/views/notification_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -31,6 +32,7 @@ class AppRoutes {
   static const String wallet = '/wallet';
   static const String liveSession = '/games/:gameId/live';
   static const String profile = '/profile';
+  static const String notifications = '/notifications';
 }
 
 @riverpod
@@ -41,76 +43,117 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.splash,
         name: 'splash',
-        builder: (context, state) => const SplashScreen(),
+        pageBuilder: (context, state) => NoTransitionPage(
+          key: state.pageKey,
+          child: const SplashScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.login,
         name: 'login',
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => NoTransitionPage(
+          key: state.pageKey,
+          child: const LoginScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.register,
         name: 'register',
-        builder: (context, state) => const RegisterScreen(),
+        pageBuilder: (context, state) => NoTransitionPage(
+          key: state.pageKey,
+          child: const RegisterScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.games,
         name: 'games',
-        builder: (context, state) => const GameListScreen(),
+        pageBuilder: (context, state) => NoTransitionPage(
+          key: state.pageKey,
+          child: const GameListScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.gameDetail,
         name: 'gameDetail',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final gameId = state.pathParameters['gameId']!;
           // gameName is passed via state.extra when navigating from the list screen
           final extra = state.extra as Map<String, dynamic>?;
           final gameName = extra?['gameName'] as String? ?? gameId;
-          return GameDetailScreen(gameId: gameId, gameName: gameName);
+          return NoTransitionPage(
+            key: state.pageKey,
+            child: GameDetailScreen(gameId: gameId, gameName: gameName),
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.tickets,
         name: 'tickets',
-        builder: (context, state) => const TicketListScreen(),
+        pageBuilder: (context, state) => NoTransitionPage(
+          key: state.pageKey,
+          child: const TicketListScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.ticket,
         name: 'ticket',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final ticketId = state.pathParameters['ticketId']!;
           final extra = state.extra as Map<String, dynamic>?;
           final ticketIndex = extra?['ticketIndex'] as int?;
-          return TicketViewScreen(ticketId: ticketId, ticketIndex: ticketIndex);
+          return NoTransitionPage(
+            key: state.pageKey,
+            child: TicketViewScreen(ticketId: ticketId, ticketIndex: ticketIndex),
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.ticketGroup,
         name: 'ticketGroup',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final gameId = state.pathParameters['gameId']!;
           final extra = state.extra as Map<String, dynamic>?;
           final gameName = extra?['gameName'] as String? ?? 'Game Tickets';
-          return GameTicketsScreen(gameId: gameId, gameName: gameName);
+          return NoTransitionPage(
+            key: state.pageKey,
+            child: GameTicketsScreen(gameId: gameId, gameName: gameName),
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.wallet,
         name: 'wallet',
-        builder: (context, state) => const WalletScreen(),
+        pageBuilder: (context, state) => NoTransitionPage(
+          key: state.pageKey,
+          child: const WalletScreen(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.liveSession,
         name: 'liveSession',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final gameId = state.pathParameters['gameId']!;
-          return LiveSessionScreen(gameId: gameId);
+          return NoTransitionPage(
+            key: state.pageKey,
+            child: LiveSessionScreen(gameId: gameId),
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.profile,
         name: 'profile',
-        builder: (context, state) => const ProfileScreen(),
+        pageBuilder: (context, state) => NoTransitionPage(
+          key: state.pageKey,
+          child: const ProfileScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        name: 'notifications',
+        pageBuilder: (context, state) => NoTransitionPage(
+          key: state.pageKey,
+          child: const NotificationScreen(),
+        ),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

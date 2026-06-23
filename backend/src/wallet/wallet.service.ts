@@ -19,6 +19,7 @@
 
 import { prisma } from '../common/prisma';
 import { notFoundError } from '../common/errors';
+import { sendNotification } from '../notification/notification.service';
 
 // ─── Get Balance ─────────────────────────────────────────────────────────────
 
@@ -193,6 +194,19 @@ export async function topUpWallet(userId: string, amountCents: number) {
     return updatedWallet;
   });
 
+  // Send notification for top-up
+  try {
+    await sendNotification({
+      userId,
+      type: 'winnings_credited',
+      title: '💰 Wallet Credited',
+      body: `Successfully credited ₹${(amountCents / 100).toFixed(2)} to your wallet. Ref: ${paymentResult.transactionId}`,
+      data: { amountCents, referenceId: paymentResult.transactionId },
+    });
+  } catch (err) {
+    console.error('[Notification Error] Failed to send topup notification:', err);
+  }
+
   return {
     balanceCents: Number(wallet.balanceCents),
     amountCredited: amountCents,
@@ -282,6 +296,19 @@ export async function requestWithdrawal(
     return request;
   });
 
+  // Send notification for withdrawal requested
+  try {
+    await sendNotification({
+      userId,
+      type: 'system_message',
+      title: '💸 Withdrawal Requested',
+      body: `Your request to withdraw ₹${(amountCents / 100).toFixed(2)} has been submitted and is pending review.`,
+      data: { withdrawalId: withdrawal.id, amountCents },
+    });
+  } catch (err) {
+    console.error('[Notification Error] Failed to send withdrawal request notification:', err);
+  }
+
   return {
     withdrawalId: withdrawal.id,
     amountCents: Number(withdrawal.amountCents),
@@ -290,3 +317,154 @@ export async function requestWithdrawal(
     createdAt: withdrawal.createdAt.toISOString(),
   };
 }
+
+/**
+ * Approve a pending withdrawal request (admin only).
+ */
+export async function approveWithdrawal(withdrawalId: string) {
+  const request = await prisma.withdrawalRequest.findUnique({
+    where: { id: withdrawalId },
+  });
+
+  if (!request) {
+    throw notFoundError('WithdrawalRequest');
+  }
+
+  if (request.status !== 'pending') {
+    throw validationError('Invalid withdrawal state', {
+      status: `Withdrawal request is already ${request.status}`,
+    });
+  }
+
+  const amountCents = request.amountCents;
+  const userId = request.userId;
+
+  // Find user's wallet
+  const wallet = await prisma.wallet.findUnique({
+    where: { userId },
+  });
+
+  if (!wallet) {
+    throw notFoundError('Wallet');
+  }
+
+  // Release hold and deduct balance atomically
+  await prisma.$transaction(async (tx) => {
+    await tx.wallet.update({
+      where: { userId },
+      data: {
+        balanceCents: { decrement: amountCents },
+        heldAmountCents: { decrement: amountCents },
+      },
+    });
+
+    await tx.withdrawalRequest.update({
+      where: { id: withdrawalId },
+      data: {
+        status: 'approved',
+        processedAt: new Date(),
+      },
+    });
+
+    await tx.transaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'withdrawal',
+        amountCents: amountCents,
+        referenceId: withdrawalId,
+        referenceType: 'withdrawal_request',
+      },
+    });
+  });
+
+  // Send notification to user
+  try {
+    await sendNotification({
+      userId,
+      type: 'withdrawal_approved',
+      title: '💸 Withdrawal Approved',
+      body: `Your withdrawal of ₹${(Number(amountCents) / 100).toFixed(2)} has been approved and processed successfully.`,
+      data: { withdrawalId, amountCents: Number(amountCents) },
+    });
+  } catch (err) {
+    console.error('[Notification Error] Failed to send withdrawal approval notification:', err);
+  }
+
+  return { withdrawalId, status: 'approved' };
+}
+
+/**
+ * Reject a pending withdrawal request (admin only).
+ */
+export async function rejectWithdrawal(withdrawalId: string, reason?: string) {
+  const request = await prisma.withdrawalRequest.findUnique({
+    where: { id: withdrawalId },
+  });
+
+  if (!request) {
+    throw notFoundError('WithdrawalRequest');
+  }
+
+  if (request.status !== 'pending') {
+    throw validationError('Invalid withdrawal state', {
+      status: `Withdrawal request is already ${request.status}`,
+    });
+  }
+
+  const amountCents = request.amountCents;
+  const userId = request.userId;
+
+  // Find user's wallet
+  const wallet = await prisma.wallet.findUnique({
+    where: { userId },
+  });
+
+  if (!wallet) {
+    throw notFoundError('Wallet');
+  }
+
+  // Release hold (no balance deduction) atomically
+  await prisma.$transaction(async (tx) => {
+    await tx.wallet.update({
+      where: { userId },
+      data: {
+        heldAmountCents: { decrement: amountCents },
+      },
+    });
+
+    await tx.withdrawalRequest.update({
+      where: { id: withdrawalId },
+      data: {
+        status: 'rejected',
+        rejectionReason: reason || 'Rejected by administrator',
+        processedAt: new Date(),
+      },
+    });
+
+    await tx.transaction.create({
+      data: {
+        walletId: wallet.id,
+        type: 'withdrawal_release',
+        amountCents: amountCents,
+        referenceId: withdrawalId,
+        referenceType: 'withdrawal_request',
+      },
+    });
+  });
+
+  // Send notification to user
+  try {
+    await sendNotification({
+      userId,
+      type: 'withdrawal_rejected',
+      title: '❌ Withdrawal Rejected',
+      body: `Your withdrawal request of ₹${(Number(amountCents) / 100).toFixed(2)} was rejected. Reason: ${reason || 'Rejected by administrator'}`,
+      data: { withdrawalId, amountCents: Number(amountCents), reason },
+    });
+  } catch (err) {
+    console.error('[Notification Error] Failed to send withdrawal rejection notification:', err);
+  }
+
+  return { withdrawalId, status: 'rejected' };
+}
+

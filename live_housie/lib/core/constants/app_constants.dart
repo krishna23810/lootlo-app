@@ -4,14 +4,14 @@ class AppConstants {
 
   static const String appName = 'Lootlo';
   // ─── Production VPS configuration ───
-  static const String baseUrl = 'https://api.kktechsolution.app/api';
-  static const String wsUrl = 'https://api.kktechsolution.app';
+  // static const String baseUrl = 'https://api.kktechsolution.app/api';
+  // static const String wsUrl = 'https://api.kktechsolution.app';
   // ─── For ngrok (signaling only, no video) ───
   // static const String baseUrl = 'https://unworn-embassy-glowworm.ngrok-free.dev/api';
   // static const String wsUrl = 'https://unworn-embassy-glowworm.ngrok-free.dev';
   // ─── For Android emulator ───
-  // static const String baseUrl = 'http://10.0.2.2:3000/api';
-  // static const String wsUrl = 'http://10.0.2.2:3000';
+  static const String baseUrl = 'http://10.176.190.238:3000/api';
+  static const String wsUrl = 'http://10.176.190.238:3000';
   // Game constraints
   static const int maxTicketsPerUser = 6;
   static const int minTicketCount = 10;

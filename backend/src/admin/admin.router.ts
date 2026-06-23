@@ -22,6 +22,7 @@ import { createGame, listAllGames } from '../game/game.service';
 import { adminLogin } from './admin-auth.service';
 import { prisma } from '../common/prisma';
 import { drawService } from '../draw/draw.service';
+import { approveWithdrawal, rejectWithdrawal } from '../wallet/wallet.service';
 
 const router = Router();
 
@@ -286,6 +287,94 @@ router.post('/games/:id/end', async (req: Request, res: Response, next: NextFunc
     const { id } = req.params;
     await drawService.endSession(id);
     res.json({ success: true, message: 'Game draw session ended' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/admin/withdrawals
+ * List user withdrawals with pagination.
+ */
+router.get('/withdrawals', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const status = req.query.status as string || 'pending';
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 20, 100);
+    const skip = (page - 1) * limit;
+
+    const where = status === 'all' ? {} : { status: status as any };
+
+    const [withdrawals, totalCount] = await Promise.all([
+      prisma.withdrawalRequest.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+              mobile: true,
+            },
+          },
+        },
+      }),
+      prisma.withdrawalRequest.count({ where }),
+    ]);
+
+    const formatted = withdrawals.map((w) => ({
+      id: w.id,
+      userId: w.userId,
+      displayName: w.user.displayName,
+      email: w.user.email,
+      mobile: w.user.mobile,
+      amountCents: Number(w.amountCents),
+      paymentDestination: w.paymentDestination,
+      status: w.status,
+      rejectionReason: w.rejectionReason,
+      createdAt: w.createdAt.toISOString(),
+      processedAt: w.processedAt?.toISOString() || null,
+    }));
+
+    res.json({
+      success: true,
+      data: formatted,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/admin/withdrawals/:id
+ * Approve or reject a user withdrawal request.
+ */
+router.post('/withdrawals/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { action, reason } = req.body; // action: 'approve' | 'reject'
+
+    if (action === 'approve') {
+      const result = await approveWithdrawal(id);
+      res.json({ success: true, data: result });
+    } else if (action === 'reject') {
+      const result = await rejectWithdrawal(id, reason);
+      res.json({ success: true, data: result });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: "Invalid action. Must be 'approve' or 'reject'.",
+      });
+    }
   } catch (error) {
     next(error);
   }
