@@ -489,6 +489,45 @@ Build clean client binaries:
 * **Android**: `flutter build apk --release`
 * **iOS**: `flutter build ipa`
 
+---
 
-style Client_Apps fill:#f9f,stroke:#333,stroke-width:2px
-style VPS_Server fill:#bbf,stroke:#333,stroke-width:2px   
+## 9. Pulling Updates & Re-Deploying
+
+When you make updates to the application locally and pull the latest commits on the production VPS server, execute these commands to compile and apply the changes:
+
+### A. Apply Backend API Server Updates
+```bash
+# 1. Navigate to the backend directory on your VPS
+cd /opt/lootlo/backend
+
+# 2. Pull the latest commits (if not already done)
+git pull
+
+# 3. Install any newly added npm packages
+npm install
+
+# 4. Re-compile the TypeScript backend
+npm run build
+
+# 5. Restart the backend process manager instance in PM2
+pm2 restart lootlo-backend
+```
+
+### B. Apply React Admin Panel Updates (Building on VPS)
+If you build the React app directly on the server after pulling:
+```bash
+# 1. Navigate to the admin directory on your VPS
+cd /opt/lootlo/admin
+
+# 2. Pull the latest commits (if not already done)
+git pull
+
+# 3. Install frontend packages
+npm install
+
+# 4. Re-compile the React bundle (outputs to 'dist')
+npm run build
+
+# 5. Copy the compiled web assets to Nginx's hosting folder
+sudo cp -r dist/* /var/www/lootlo-admin/
+```
