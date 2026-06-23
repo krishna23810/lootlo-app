@@ -23,6 +23,7 @@ import { adminLogin } from './admin-auth.service';
 import { prisma } from '../common/prisma';
 import { drawService } from '../draw/draw.service';
 import { approveWithdrawal, rejectWithdrawal } from '../wallet/wallet.service';
+import { sendNotification, sendBulkNotification } from '../notification/notification.service';
 
 const router = Router();
 
@@ -375,6 +376,125 @@ router.post('/withdrawals/:id', async (req: Request, res: Response, next: NextFu
         message: "Invalid action. Must be 'approve' or 'reject'.",
       });
     }
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/admin/notifications
+ * Send custom notification to all users, a specific user, or game participants.
+ */
+router.post('/notifications', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { target, title, body, userId, gameId } = req.body;
+
+    if (!target || !['all', 'user', 'game'].includes(target)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid target. Must be 'all', 'user', or 'game'.",
+      });
+      return;
+    }
+
+    if (!title || typeof title !== 'string' || !title.trim()) {
+      res.status(400).json({
+        success: false,
+        message: 'Title is required.',
+      });
+      return;
+    }
+
+    if (!body || typeof body !== 'string' || !body.trim()) {
+      res.status(400).json({
+        success: false,
+        message: 'Body is required.',
+      });
+      return;
+    }
+
+    let recipientCount = 0;
+
+    if (target === 'all') {
+      const users = await prisma.user.findMany({
+        select: { id: true },
+      });
+      const userIds = users.map((u) => u.id);
+      recipientCount = userIds.length;
+
+      if (recipientCount > 0) {
+        await sendBulkNotification(userIds, 'system_message', title.trim(), body.trim());
+      }
+    } else if (target === 'user') {
+      if (!userId || typeof userId !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: 'userId is required for target user.',
+        });
+        return;
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found.',
+        });
+        return;
+      }
+
+      recipientCount = 1;
+      await sendNotification({
+        userId,
+        type: 'system_message',
+        title: title.trim(),
+        body: body.trim(),
+      });
+    } else if (target === 'game') {
+      if (!gameId || typeof gameId !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: 'gameId is required for target game.',
+        });
+        return;
+      }
+
+      const game = await prisma.game.findUnique({
+        where: { id: gameId },
+        select: { id: true },
+      });
+
+      if (!game) {
+        res.status(404).json({
+          success: false,
+          message: 'Game not found.',
+        });
+        return;
+      }
+
+      const tickets = await prisma.ticket.findMany({
+        where: { gameId },
+        select: { userId: true },
+        distinct: ['userId'],
+      });
+
+      const userIds = tickets.map((t) => t.userId);
+      recipientCount = userIds.length;
+
+      if (recipientCount > 0) {
+        await sendBulkNotification(userIds, 'system_message', title.trim(), body.trim());
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Notification(s) sent successfully.',
+      recipientCount,
+    });
   } catch (error) {
     next(error);
   }

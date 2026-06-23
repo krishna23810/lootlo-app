@@ -6,6 +6,7 @@ import GamesPage from './pages/GamesPage';
 import CreateGamePage from './pages/CreateGamePage';
 import UsersPage from './pages/UsersPage';
 import LiveHostPage from './pages/LiveHostPage';
+import NotificationsPage from './pages/NotificationsPage';
 
 function App() {
   const isLoggedIn = !!localStorage.getItem('admin_token');
@@ -20,6 +21,7 @@ function App() {
           <Route path="games/create" element={<CreateGamePage />} />
           <Route path="games/:gameId/host" element={<LiveHostPage />} />
           <Route path="users" element={<UsersPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

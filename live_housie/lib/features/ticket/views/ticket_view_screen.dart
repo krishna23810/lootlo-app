@@ -1186,13 +1186,13 @@ class _TicketViewScreenState extends ConsumerState<TicketViewScreen> {
   Widget _buildGameDetailsCard(TicketGameModel game, BuildContext context) {
     final startTimeStr = '${_formatDate(game.scheduledStartTime)}, ${_formatTime(game.scheduledStartTime)}';
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFFECEEF0),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
+    return Material(
+      color: const Color(0xFFECEEF0),
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: SizedBox(
+        width: double.infinity,
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Padding(
@@ -1334,8 +1334,9 @@ class _TicketViewScreenState extends ConsumerState<TicketViewScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildDetailField(String label, String value) {
     return Column(

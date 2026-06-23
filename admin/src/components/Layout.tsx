@@ -9,6 +9,7 @@ export default function Layout() {
     { path: '/games', label: 'Games', icon: '🎮' },
     { path: '/games/create', label: 'Create Game', icon: '➕' },
     { path: '/users', label: 'Users', icon: '👥' },
+    { path: '/notifications', label: 'Notifications', icon: '🔔' },
   ];
 
   const handleLogout = () => {
